@@ -11,6 +11,8 @@ import enrollmentsRoutes from './modules/enrollments/enrollments.routes.js';
 import staffRoutes from './modules/staff/staff.routes.js';
 import admissionsRoutes from './modules/admissions/admissions.routes.js';
 import publicRoutes from './modules/admissions/public.routes.js';
+import onlineEnrollmentRoutes from './modules/online-enrollments/online-enrollments.routes.js';
+import familyRoutes from './modules/online-enrollments/family.routes.js';
 import { pool } from './config/db.js';
 
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -51,6 +53,8 @@ app.use('/api/enrollments', enrollmentsRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/admissions', admissionsRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/online-enrollments', onlineEnrollmentRoutes);
+app.use('/api/family/enrollments', familyRoutes);
 
 app.use((req, res) => res.status(404).json({ error: "Rota nao encontrada" }));
 app.use(errorHandler);
