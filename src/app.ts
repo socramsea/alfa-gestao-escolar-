@@ -7,14 +7,18 @@ import { pool } from './database/pool.js';
 import { requireStaff } from './middlewares/auth.js';
 import { errorHandler } from './middlewares/error-handler.js';
 import { academicRouter } from './modules/academic/routes.js';
+import { admissionsRouter, visitSlotsRouter } from './modules/admissions/routes.js';
 import { auditRouter } from './modules/audit/routes.js';
 import { authRouter } from './modules/auth/routes.js';
 import { dashboardRouter } from './modules/dashboard/routes.js';
 import { guardiansRouter } from './modules/guardians/routes.js';
 import { portalRouter } from './modules/portal/routes.js';
+import { publicRouter } from './modules/public/routes.js';
 import { campaignsRouter, renewalRequestsRouter } from './modules/renewals/routes.js';
 import { schoolsRouter } from './modules/schools/routes.js';
+import { siteRouter } from './modules/site/routes.js';
 import { studentsRouter } from './modules/students/routes.js';
+import { unitsRouter } from './modules/units/routes.js';
 import { usersRouter } from './modules/users/routes.js';
 import { logger } from './shared/logger.js';
 
@@ -37,6 +41,7 @@ const api = Router();
 // Rotas públicas ou com autenticação própria.
 api.use('/auth', authRouter);
 api.use('/portal', portalRouter);
+api.use('/public', publicRouter);
 
 // Rotas da equipe escolar: exigem token válido e usuário ativo no banco.
 const staff = Router();
@@ -50,6 +55,10 @@ staff.use('/renewal-campaigns', campaignsRouter);
 staff.use('/renewal-requests', renewalRequestsRouter);
 staff.use('/dashboard', dashboardRouter);
 staff.use('/audit-logs', auditRouter);
+staff.use('/units', unitsRouter);
+staff.use('/site', siteRouter);
+staff.use('/admission-leads', admissionsRouter);
+staff.use('/visit-slots', visitSlotsRouter);
 api.use(staff);
 
 app.use('/api', api);

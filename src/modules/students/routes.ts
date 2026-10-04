@@ -24,6 +24,7 @@ const listQuery = z.object({
   search: z.string().trim().max(100).optional(),
   class_id: uuid.optional(),
   without_class: z.enum(['true', 'false']).optional(),
+  unit_id: uuid.optional(),
   page: z.coerce.number().int().min(1).default(1),
   page_size: z.coerce.number().int().min(1).max(100).default(30),
 });
@@ -36,21 +37,24 @@ studentsRouter.get('/', requirePermission('students:read'), async (request, resp
     query.search ? `%${query.search.toLowerCase()}%` : null,
     query.class_id ?? null,
     query.without_class === 'true',
+    query.unit_id ?? null,
   ];
   const where = `
       WHERE s.school_id = $1
         AND s.deleted_at IS NULL
         AND ($2::text IS NULL OR lower(s.full_name) LIKE $2)
         AND ($3::uuid IS NULL OR s.current_class_id = $3)
-        AND (NOT $4::boolean OR s.current_class_id IS NULL)`;
+        AND (NOT $4::boolean OR s.current_class_id IS NULL)
+        AND ($5::uuid IS NULL OR s.unit_id = $5)`;
 
   const [{ rows }, total] = await Promise.all([
     pool.query(
       `SELECT s.id, s.full_name, s.birth_date::text AS birth_date, s.status,
-              s.current_class_id, c.name AS current_class_name,
+              s.current_class_id, c.name AS current_class_name, un.name AS unit_name,
               pg.id AS primary_guardian_id, pg.full_name AS primary_guardian_name, pg.phone AS primary_guardian_phone
          FROM students s
          LEFT JOIN classes c ON c.id = s.current_class_id
+         LEFT JOIN units un ON un.id = s.unit_id
          LEFT JOIN LATERAL (
            SELECT g.id, g.full_name, g.phone
              FROM student_guardians sg
@@ -61,7 +65,7 @@ studentsRouter.get('/', requirePermission('students:read'), async (request, resp
          ) pg ON true
          ${where}
         ORDER BY lower(s.full_name)
-        LIMIT $5 OFFSET $6`,
+        LIMIT $6 OFFSET $7`,
       [...params, query.page_size, (query.page - 1) * query.page_size],
     ),
     pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM students s ${where}`, params),
@@ -135,7 +139,7 @@ const updateSchema = z
     current_class_id: uuid.nullable(),
     address,
     health_notes: z.string().trim().max(2000).nullable(),
-    status: z.enum(['active', 'inactive', 'transferred', 'graduated']),
+    status: z.enum(['applicant', 'active', 'inactive', 'transferred', 'graduated']),
   })
   .partial()
   .strict();

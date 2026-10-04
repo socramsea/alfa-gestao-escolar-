@@ -9,6 +9,7 @@ import { parse } from '../../shared/validate.js';
 import { actorFrom, recordAudit } from '../audit/service.js';
 import {
   REQUEST_STATUSES,
+  afterRejection,
   approveRequest,
   changedFields,
   ensureClassInYear,
@@ -24,6 +25,8 @@ export const campaignsRouter = Router();
 
 const campaignSchema = z
   .object({
+    kind: z.enum(['renewal', 'admission']).default('renewal'),
+    unit_id: uuid.nullable().optional(),
     school_year_id: uuid,
     title: z.string().trim().min(3).max(120),
     starts_on: isoDate,
@@ -35,8 +38,8 @@ const campaignSchema = z
   });
 
 const CAMPAIGN_SELECT = `
-  SELECT rc.id, rc.title, rc.status, rc.starts_on::text AS starts_on, rc.ends_on::text AS ends_on,
-         rc.school_year_id, sy.year, rc.created_at,
+  SELECT rc.id, rc.title, rc.kind, rc.status, rc.starts_on::text AS starts_on, rc.ends_on::text AS ends_on,
+         rc.school_year_id, sy.year, rc.unit_id, un.name AS unit_name, rc.created_at,
          count(r.id)::int AS total,
          count(r.id) FILTER (WHERE r.status = 'pending')::int AS pending,
          count(r.id) FILTER (WHERE r.status = 'submitted')::int AS submitted,
@@ -45,10 +48,11 @@ const CAMPAIGN_SELECT = `
          count(r.id) FILTER (WHERE r.status = 'rejected')::int AS rejected
     FROM renewal_campaigns rc
     JOIN school_years sy ON sy.id = rc.school_year_id
+    LEFT JOIN units un ON un.id = rc.unit_id
     LEFT JOIN renewal_requests r ON r.campaign_id = rc.id`;
 
 async function loadCampaign(schoolId: string, id: string) {
-  const { rows } = await pool.query(`${CAMPAIGN_SELECT} WHERE rc.id = $1 AND rc.school_id = $2 GROUP BY rc.id, sy.year`, [
+  const { rows } = await pool.query(`${CAMPAIGN_SELECT} WHERE rc.id = $1 AND rc.school_id = $2 GROUP BY rc.id, sy.year, un.name`, [
     id,
     schoolId,
   ]);
@@ -56,10 +60,14 @@ async function loadCampaign(schoolId: string, id: string) {
   return rows[0];
 }
 
+const campaignListQuery = z.object({ kind: z.enum(['renewal', 'admission']).optional() });
+
 campaignsRouter.get('/', requirePermission('renewals:read'), async (request, response) => {
+  const query = parse(campaignListQuery, request.query);
   const { rows } = await pool.query(
-    `${CAMPAIGN_SELECT} WHERE rc.school_id = $1 GROUP BY rc.id, sy.year ORDER BY rc.created_at DESC`,
-    [request.user!.school_id],
+    `${CAMPAIGN_SELECT} WHERE rc.school_id = $1 AND ($2::text IS NULL OR rc.kind = $2)
+      GROUP BY rc.id, sy.year, un.name ORDER BY rc.created_at DESC`,
+    [request.user!.school_id, query.kind ?? null],
   );
   response.json({ data: rows });
 });
@@ -79,11 +87,15 @@ campaignsRouter.post('/', requirePermission('renewals:manage'), async (request, 
       schoolId,
     ]);
     if (!year.rowCount) throw notFound('Ano letivo não encontrado');
+    if (input.unit_id) {
+      const unit = await client.query('SELECT 1 FROM units WHERE id = $1 AND school_id = $2', [input.unit_id, schoolId]);
+      if (!unit.rowCount) throw notFound('Unidade não encontrada');
+    }
 
     const { rows } = await client.query<{ id: string }>(
-      `INSERT INTO renewal_campaigns (school_id, school_year_id, title, starts_on, ends_on, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [schoolId, input.school_year_id, input.title, input.starts_on, input.ends_on, request.user!.id],
+      `INSERT INTO renewal_campaigns (school_id, school_year_id, title, starts_on, ends_on, created_by, kind, unit_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [schoolId, input.school_year_id, input.title, input.starts_on, input.ends_on, request.user!.id, input.kind, input.unit_id ?? null],
     );
 
     await recordAudit(client, {
@@ -92,7 +104,7 @@ campaignsRouter.post('/', requirePermission('renewals:manage'), async (request, 
       action: 'renewal_campaign.created',
       entityType: 'renewal_campaign',
       entityId: rows[0].id,
-      metadata: { title: input.title },
+      metadata: { title: input.title, kind: input.kind },
     });
     return rows[0].id;
   });
@@ -144,6 +156,7 @@ campaignsRouter.post('/:id/sync', requirePermission('renewals:manage'), async (r
   const schoolId = request.user!.school_id;
   const campaign = await loadCampaign(schoolId, id);
   if (campaign.status !== 'open') throw conflict('A campanha precisa estar aberta');
+  if (campaign.kind !== 'renewal') throw conflict('Matrícula de novos alunos recebe alunos pela captação, não por sincronização');
 
   const created = await withTransaction((client) => syncCampaignRequests(client, schoolId, id));
   response.json({ ...(await loadCampaign(schoolId, id)), requests_created: created });
@@ -165,7 +178,7 @@ renewalRequestsRouter.get('/', requirePermission('renewals:read'), async (reques
 
   const { rows } = await pool.query(
     `SELECT r.id, r.status, r.submitted_at, r.reviewed_at, r.target_class_id, tc.name AS target_class_name,
-            s.id AS student_id, s.full_name AS student_name, c.name AS current_class_name,
+            s.id AS student_id, s.full_name AS student_name, c.name AS current_class_name, r.admission_lead_id,
             g.full_name AS guardian_name, g.phone AS guardian_phone, sch.name AS school_name
        FROM renewal_requests r
        JOIN students s ON s.id = r.student_id
@@ -203,7 +216,8 @@ renewalRequestsRouter.get('/:id', requirePermission('renewals:read'), async (req
   const schoolId = request.user!.school_id;
 
   const { rows } = await pool.query(
-    `SELECT r.id, r.status, r.campaign_id, rc.title AS campaign_title, rc.school_year_id,
+    `SELECT r.id, r.status, r.campaign_id, rc.title AS campaign_title, rc.kind AS campaign_kind, rc.school_year_id,
+            r.admission_lead_id,
             r.target_class_id, r.proposed_data, r.guardian_notes, r.terms_accepted_at,
             r.submitted_at, r.submitted_by_guardian_id, r.reviewed_at, r.review_notes,
             u.name AS reviewed_by_name,
@@ -323,6 +337,7 @@ for (const [path, status] of [
           WHERE id = $1 AND school_id = $2`,
         [id, schoolId, status, request.user!.id, input.notes],
       );
+      if (status === 'rejected') await afterRejection(client, renewal, actorFrom(request), input.notes);
     });
 
     response.json({ id, status });

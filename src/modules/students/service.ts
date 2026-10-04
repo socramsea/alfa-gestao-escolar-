@@ -32,6 +32,8 @@ export const createStudentSchema = z.object({
   full_name: z.string().trim().min(2).max(160),
   birth_date: isoDate,
   current_class_id: uuid.nullable().optional(),
+  unit_id: uuid.optional(),
+  status: z.enum(['applicant', 'active']).optional(),
   social_name: z.string().trim().max(160).optional(),
   cpf: cpf.optional(),
   address: address.optional(),
@@ -42,13 +44,32 @@ export const createStudentSchema = z.object({
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 type GuardianInput = z.infer<typeof guardianInputSchema>;
 
-async function ensureClassBelongsToSchool(db: Db, schoolId: string, classId: string | null | undefined) {
-  if (!classId) return;
-  const { rowCount } = await db.query(
-    'SELECT 1 FROM classes WHERE id = $1 AND school_id = $2 AND deleted_at IS NULL',
-    [classId, schoolId],
+/**
+ * Define a unidade do aluno: a informada, a da turma ou, na falta das duas,
+ * a unidade mais antiga da escola (a sede).
+ */
+async function resolveUnit(db: Db, schoolId: string, classId: string | null | undefined, unitId: string | undefined) {
+  if (classId) {
+    const { rows } = await db.query<{ unit_id: string | null }>(
+      'SELECT unit_id FROM classes WHERE id = $1 AND school_id = $2 AND deleted_at IS NULL',
+      [classId, schoolId],
+    );
+    if (!rows[0]) throw notFound('Turma não encontrada');
+    if (unitId && rows[0].unit_id && rows[0].unit_id !== unitId) throw badRequest('A turma é de outra unidade');
+    if (rows[0].unit_id) return rows[0].unit_id;
+  }
+
+  if (unitId) {
+    const { rowCount } = await db.query('SELECT 1 FROM units WHERE id = $1 AND school_id = $2', [unitId, schoolId]);
+    if (!rowCount) throw notFound('Unidade não encontrada');
+    return unitId;
+  }
+
+  const { rows } = await db.query<{ id: string }>(
+    'SELECT id FROM units WHERE school_id = $1 ORDER BY created_at LIMIT 1',
+    [schoolId],
   );
-  if (!rowCount) throw notFound('Turma não encontrada');
+  return rows[0]?.id ?? null;
 }
 
 /**
@@ -112,11 +133,11 @@ export async function linkGuardian(
 }
 
 export async function createStudent(db: Db, schoolId: string, input: CreateStudentInput, actor: Actor) {
-  await ensureClassBelongsToSchool(db, schoolId, input.current_class_id);
+  const unitId = await resolveUnit(db, schoolId, input.current_class_id, input.unit_id);
 
   const { rows } = await db.query<{ id: string }>(
-    `INSERT INTO students (school_id, full_name, social_name, birth_date, cpf, current_class_id, address, health_notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO students (school_id, full_name, social_name, birth_date, cpf, current_class_id, address, health_notes, unit_id, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id`,
     [
       schoolId,
@@ -127,6 +148,8 @@ export async function createStudent(db: Db, schoolId: string, input: CreateStude
       input.current_class_id ?? null,
       input.address ?? {},
       input.health_notes ?? null,
+      unitId,
+      input.status ?? 'active',
     ],
   );
   const studentId = rows[0].id;
@@ -156,9 +179,11 @@ export async function createStudent(db: Db, schoolId: string, input: CreateStude
 export async function getStudent(db: Db, schoolId: string, studentId: string) {
   const { rows } = await db.query(
     `SELECT s.id, s.full_name, s.social_name, s.birth_date::text AS birth_date, s.cpf, s.address, s.health_notes,
-            s.status, s.current_class_id, c.name AS current_class_name, s.created_at, s.updated_at
+            s.status, s.current_class_id, c.name AS current_class_name, s.unit_id, un.name AS unit_name,
+            s.created_at, s.updated_at
        FROM students s
        LEFT JOIN classes c ON c.id = s.current_class_id
+       LEFT JOIN units un ON un.id = s.unit_id
       WHERE s.id = $1 AND s.school_id = $2 AND s.deleted_at IS NULL`,
     [studentId, schoolId],
   );
@@ -225,6 +250,7 @@ export async function importStudents(db: Db, schoolId: string, input: z.infer<ty
           full_name: row.student_name,
           birth_date: row.birth_date,
           current_class_id: row.class_name ? classIds.get(row.class_name.toLowerCase()) : null,
+          status: 'active',
           guardians: [
             {
               full_name: row.guardian_name,

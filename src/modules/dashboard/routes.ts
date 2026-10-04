@@ -100,3 +100,64 @@ dashboardRouter.get('/renewals/:id', requirePermission('dashboard:read'), async 
     timeline: timeline.rows,
   });
 });
+
+/** Funil de captação de novos alunos: do primeiro contato à matrícula. */
+dashboardRouter.get('/admissions', requirePermission('dashboard:read'), async (request, response) => {
+  const schoolId = request.user!.school_id;
+
+  const [byStatus, bySource, byUnit, weekly, upcoming] = await Promise.all([
+    pool.query<{ status: string; count: number }>(
+      `SELECT status, count(*)::int AS count FROM admission_leads WHERE school_id = $1 GROUP BY status`,
+      [schoolId],
+    ),
+    pool.query(
+      `SELECT source, count(*)::int AS total, count(*) FILTER (WHERE status = 'enrolled')::int AS enrolled
+         FROM admission_leads WHERE school_id = $1 GROUP BY source ORDER BY total DESC`,
+      [schoolId],
+    ),
+    pool.query(
+      `SELECT u.name AS unit_name, count(l.id)::int AS total,
+              count(l.id) FILTER (WHERE l.status = 'enrolled')::int AS enrolled
+         FROM units u LEFT JOIN admission_leads l ON l.unit_id = u.id
+        WHERE u.school_id = $1 AND u.active GROUP BY u.id ORDER BY u.created_at`,
+      [schoolId],
+    ),
+    pool.query(
+      `SELECT to_char(w, 'YYYY-MM-DD') AS week,
+              (SELECT count(*)::int FROM admission_leads l
+                WHERE l.school_id = $1 AND l.created_at >= w AND l.created_at < w + interval '7 days') AS leads
+         FROM generate_series(date_trunc('week', now()) - interval '7 weeks', date_trunc('week', now()), interval '1 week') AS w`,
+      [schoolId],
+    ),
+    pool.query<{ count: number }>(
+      `SELECT count(*)::int AS count FROM visits v JOIN visit_slots vs ON vs.id = v.slot_id
+        WHERE v.school_id = $1 AND v.status = 'scheduled' AND vs.starts_at BETWEEN now() AND now() + interval '7 days'`,
+      [schoolId],
+    ),
+  ]);
+
+  const count = (status: string) => byStatus.rows.find((row) => row.status === status)?.count ?? 0;
+  const total = byStatus.rows.reduce((sum, row) => sum + row.count, 0);
+  // Cada etapa conta quem chegou nela ou passou dela.
+  const reachedVisit = ['visit_scheduled', 'visited', 'enrolling', 'enrolled'].reduce((sum, s) => sum + count(s), 0);
+  const visited = ['visited', 'enrolling', 'enrolled'].reduce((sum, s) => sum + count(s), 0);
+  const enrolling = count('enrolling') + count('enrolled');
+
+  response.json({
+    total,
+    funnel: [
+      { stage: 'leads', label: 'Contatos', count: total },
+      { stage: 'visit', label: 'Visita agendada', count: reachedVisit },
+      { stage: 'visited', label: 'Visitaram', count: visited },
+      { stage: 'enrolling', label: 'Matrícula iniciada', count: enrolling },
+      { stage: 'enrolled', label: 'Matriculados', count: count('enrolled') },
+    ],
+    new_waiting: count('new'),
+    lost: count('lost'),
+    conversion_rate: total ? Math.round((count('enrolled') / total) * 100) : 0,
+    visits_next_7_days: upcoming.rows[0].count,
+    by_source: bySource.rows,
+    by_unit: byUnit.rows,
+    weekly: weekly.rows,
+  });
+});

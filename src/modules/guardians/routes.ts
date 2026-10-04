@@ -1,15 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { env } from '../../config/env.js';
 import { pool } from '../../database/pool.js';
 import { requirePermission } from '../../middlewares/auth.js';
 import { withTransaction } from '../../shared/db.js';
 import { notFound } from '../../shared/errors.js';
 import { address, cpf, idParams, phone } from '../../shared/schemas.js';
 import { parse } from '../../shared/validate.js';
-import { whatsAppLink } from '../../shared/whatsapp.js';
 import { actorFrom, diff, recordAudit } from '../audit/service.js';
-import { generateOpaqueToken, hashToken } from '../auth/tokens.js';
+import { createAccessLink } from './service.js';
 
 export const guardiansRouter = Router();
 
@@ -79,55 +77,11 @@ guardiansRouter.patch('/:id', requirePermission('students:manage'), async (reque
   response.json(await loadGuardian(schoolId, id));
 });
 
-/**
- * Gera o link pessoal do responsável. O token só é exibido nesta resposta; o banco
- * guarda apenas o hash. Links anteriores do mesmo responsável são revogados.
- */
 guardiansRouter.post('/:id/access-links', requirePermission('guardians:invite'), async (request, response) => {
   const { id } = parse(idParams, request.params);
   const schoolId = request.user!.school_id;
-  const guardian = await loadGuardian(schoolId, id);
-  const token = generateOpaqueToken();
-
-  const link = await withTransaction(async (client) => {
-    await client.query(
-      `UPDATE guardian_access_links SET revoked_at = now()
-        WHERE guardian_id = $1 AND school_id = $2 AND revoked_at IS NULL`,
-      [id, schoolId],
-    );
-
-    const { rows } = await client.query<{ expires_at: Date }>(
-      `INSERT INTO guardian_access_links (school_id, guardian_id, token_hash, expires_at, created_by)
-       VALUES ($1, $2, $3, now() + make_interval(days => $4), $5)
-       RETURNING expires_at`,
-      [schoolId, id, hashToken(token), env.PORTAL_LINK_TTL_DAYS, request.user!.id],
-    );
-
-    await recordAudit(client, {
-      schoolId,
-      actor: actorFrom(request),
-      action: 'guardian.access_link_created',
-      entityType: 'guardian',
-      entityId: id,
-    });
-
-    return rows[0];
-  });
-
-  const school = await pool.query<{ name: string }>('SELECT name FROM schools WHERE id = $1', [schoolId]);
-  const url = `${env.PUBLIC_APP_URL}/r/${token}`;
-  const firstName = guardian.full_name.split(' ')[0];
-  const message =
-    `Olá, ${firstName}! Aqui é da ${school.rows[0].name}. ` +
-    `Pelo link abaixo você confere e atualiza os dados de matrícula, sem precisar vir à escola nem preencher papel:\n${url}\n` +
-    `Para entrar, confirme a data de nascimento do aluno. O link é pessoal, não compartilhe.`;
-
-  response.status(201).json({
-    url,
-    expires_at: link.expires_at,
-    message,
-    whatsapp_url: whatsAppLink(guardian.phone, message),
-  });
+  const link = await withTransaction((client) => createAccessLink(client, schoolId, id, actorFrom(request)));
+  response.status(201).json(link);
 });
 
 guardiansRouter.post('/:id/access-links/revoke', requirePermission('guardians:invite'), async (request, response) => {

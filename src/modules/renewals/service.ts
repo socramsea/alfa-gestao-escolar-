@@ -65,13 +65,16 @@ type RequestRow = {
   proposed_data: ProposedData | null;
   target_class_id: string | null;
   campaign_status: 'draft' | 'open' | 'closed';
+  campaign_kind: 'renewal' | 'admission';
   school_year_id: string;
+  admission_lead_id: string | null;
 };
 
 export async function lockRequest(db: Db, schoolId: string, requestId: string): Promise<RequestRow> {
   const { rows } = await db.query<RequestRow>(
     `SELECT r.id, r.school_id, r.campaign_id, r.student_id, r.status, r.submitted_by_guardian_id,
-            r.proposed_data, r.target_class_id, rc.status AS campaign_status, rc.school_year_id
+            r.proposed_data, r.target_class_id, rc.status AS campaign_status, rc.kind AS campaign_kind,
+            rc.school_year_id, r.admission_lead_id
        FROM renewal_requests r
        JOIN renewal_campaigns rc ON rc.id = r.campaign_id
       WHERE r.id = $1 AND r.school_id = $2
@@ -110,13 +113,19 @@ export async function transition(
   });
 }
 
-/** Cria as solicitações dos alunos ativos que ainda não estão na campanha. */
+/**
+ * Renovação: cria as solicitações dos alunos ativos (da unidade, se a campanha for
+ * de uma unidade) que ainda não estão na campanha. Matrícula de novos alunos não
+ * sincroniza: as solicitações nascem da conversão de cada interessado.
+ */
 export async function syncCampaignRequests(db: Db, schoolId: string, campaignId: string) {
   const { rows } = await db.query<{ id: string }>(
     `INSERT INTO renewal_requests (school_id, campaign_id, student_id)
-     SELECT s.school_id, $2, s.id
+     SELECT s.school_id, rc.id, s.id
        FROM students s
+       JOIN renewal_campaigns rc ON rc.id = $2 AND rc.school_id = s.school_id AND rc.kind = 'renewal'
       WHERE s.school_id = $1 AND s.deleted_at IS NULL AND s.status = 'active'
+        AND (rc.unit_id IS NULL OR s.unit_id = rc.unit_id)
      ON CONFLICT (campaign_id, student_id) DO NOTHING
      RETURNING id`,
     [schoolId, campaignId],
@@ -211,6 +220,15 @@ export async function approveRequest(
     [request.school_id, request.student_id, request.school_year_id, targetClassId, request.id],
   );
 
+  // Aluno novo deixa de ser candidato e o atendimento de captação é concluído.
+  await db.query(
+    `UPDATE students SET status = 'active' WHERE id = $1 AND school_id = $2 AND status = 'applicant'`,
+    [request.student_id, request.school_id],
+  );
+  if (request.admission_lead_id) {
+    await finishLead(db, request, 'enrolled', actor, null);
+  }
+
   await recordAudit(db, {
     schoolId: request.school_id,
     actor,
@@ -219,6 +237,30 @@ export async function approveRequest(
     entityId: rows[0].id,
     metadata: { renewal_request_id: request.id, class_id: targetClassId },
   });
+}
+
+async function finishLead(db: Db, request: RequestRow, to: 'enrolled' | 'lost', actor: Actor, notes: string | null) {
+  const { rows } = await db.query<{ status: string }>(
+    'SELECT status FROM admission_leads WHERE id = $1 AND school_id = $2 FOR UPDATE',
+    [request.admission_lead_id, request.school_id],
+  );
+  if (!rows[0] || rows[0].status === to) return;
+
+  await db.query(
+    `UPDATE admission_leads SET status = $3::varchar, lost_reason = CASE WHEN $3::varchar = 'lost' THEN $4::varchar ELSE lost_reason END
+      WHERE id = $1 AND school_id = $2`,
+    [request.admission_lead_id, request.school_id, to, notes],
+  );
+  await db.query(
+    `INSERT INTO admission_lead_events (school_id, lead_id, type, from_status, to_status, notes, actor_type, actor_id)
+     VALUES ($1, $2, 'status_changed', $3, $4, $5, $6, $7)`,
+    [request.school_id, request.admission_lead_id, rows[0].status, to, notes, actor.type, actor.id],
+  );
+}
+
+/** Matrícula de aluno novo rejeitada: o atendimento de captação é encerrado com o motivo. */
+export async function afterRejection(db: Db, request: RequestRow, actor: Actor, notes: string) {
+  if (request.admission_lead_id) await finishLead(db, request, 'lost', actor, notes);
 }
 
 /** Mensagem de lembrete para quem ainda não respondeu. */

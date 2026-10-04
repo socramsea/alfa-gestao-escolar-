@@ -19,15 +19,16 @@ const yearSchema = z.object({
 
 const classSchema = z.object({
   school_year_id: uuid,
+  unit_id: uuid.optional(),
   name: z.string().trim().min(1).max(80),
   grade: z.string().trim().min(1).max(60),
   shift: z.enum(['morning', 'afternoon', 'evening', 'full_time']),
   capacity: z.number().int().positive().nullable().optional(),
 });
 
-const classUpdateSchema = classSchema.omit({ school_year_id: true }).partial().strict();
+const classUpdateSchema = classSchema.omit({ school_year_id: true, unit_id: true }).partial().strict();
 
-const CLASS_COLUMNS = 'c.id, c.school_year_id, sy.year, c.name, c.grade, c.shift, c.capacity';
+const CLASS_COLUMNS = 'c.id, c.school_year_id, sy.year, c.unit_id, c.name, c.grade, c.shift, c.capacity';
 
 academicRouter.get('/school-years', requirePermission('academic:read'), async (request, response) => {
   const { rows } = await pool.query(
@@ -65,7 +66,7 @@ academicRouter.post('/school-years', requirePermission('academic:manage'), async
   response.status(201).json(year);
 });
 
-const classQuery = z.object({ school_year_id: uuid.optional() });
+const classQuery = z.object({ school_year_id: uuid.optional(), unit_id: uuid.optional() });
 
 academicRouter.get('/classes', requirePermission('academic:read'), async (request, response) => {
   const query = parse(classQuery, request.query);
@@ -79,8 +80,9 @@ academicRouter.get('/classes', requirePermission('academic:read'), async (reques
       WHERE c.school_id = $1
         AND c.deleted_at IS NULL
         AND ($2::uuid IS NULL OR c.school_year_id = $2)
+        AND ($3::uuid IS NULL OR c.unit_id = $3)
       ORDER BY sy.year DESC, c.grade, c.name`,
-    [request.user!.school_id, query.school_year_id ?? null],
+    [request.user!.school_id, query.school_year_id ?? null, query.unit_id ?? null],
   );
   response.json({ data: rows });
 });
@@ -96,6 +98,14 @@ academicRouter.post('/classes', requirePermission('academic:manage'), async (req
     ]);
     if (!year.rowCount) throw notFound('Ano letivo não encontrado');
 
+    const unit = await client.query<{ id: string }>(
+      input.unit_id
+        ? 'SELECT id FROM units WHERE id = $2 AND school_id = $1'
+        : 'SELECT id FROM units WHERE school_id = $1 AND $2::uuid IS NULL ORDER BY created_at LIMIT 1',
+      [schoolId, input.unit_id ?? null],
+    );
+    if (!unit.rows[0]) throw notFound('Unidade não encontrada');
+
     const duplicate = await client.query(
       `SELECT 1 FROM classes
         WHERE school_year_id = $1 AND lower(name) = lower($2) AND deleted_at IS NULL`,
@@ -104,10 +114,10 @@ academicRouter.post('/classes', requirePermission('academic:manage'), async (req
     if (duplicate.rowCount) throw conflict('Já existe uma turma com este nome no ano letivo');
 
     const { rows } = await client.query(
-      `INSERT INTO classes (school_id, school_year_id, name, grade, shift, capacity)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO classes (school_id, school_year_id, name, grade, shift, capacity, unit_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [schoolId, input.school_year_id, input.name, input.grade, input.shift, input.capacity ?? null],
+      [schoolId, input.school_year_id, input.name, input.grade, input.shift, input.capacity ?? null, unit.rows[0].id],
     );
 
     await recordAudit(client, {

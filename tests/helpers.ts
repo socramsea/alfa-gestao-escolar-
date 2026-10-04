@@ -21,10 +21,14 @@ export async function createSchool(slug: string) {
     `INSERT INTO schools (name, slug, status) VALUES ($1, $2, 'active') RETURNING id`,
     [`Escola ${slug}`, slug],
   );
-  return { id: rows[0].id, slug };
+  const unit = await pool.query<{ id: string }>(
+    `INSERT INTO units (school_id, name, slug) VALUES ($1, 'Unidade Sede', 'sede') RETURNING id`,
+    [rows[0].id],
+  );
+  return { id: rows[0].id, slug, unitId: unit.rows[0].id };
 }
 
-export async function createUser(school: { id: string; slug: string }, role: StaffRole, overrides: { active?: boolean } = {}) {
+export async function createUser(school: { id: string; slug: string; unitId?: string }, role: StaffRole, overrides: { active?: boolean } = {}) {
   passwordHash ??= await hashPassword(PASSWORD);
   const email = `${role}-${Math.random().toString(36).slice(2, 8)}@${school.slug}.test`;
   const { rows } = await pool.query<{ id: string }>(

@@ -30,6 +30,10 @@ export const PERMISSIONS = {
   'renewals:review': ['school_admin', 'secretary'],
   'dashboard:read': ['school_admin', 'director', 'secretary'],
   'audit:read': ['school_admin', 'director'],
+  'units:manage': ['school_admin'],
+  'admissions:read': ['school_admin', 'director', 'secretary'],
+  'admissions:manage': ['school_admin', 'secretary'],
+  'site:manage': ['school_admin', 'secretary'],
 } as const satisfies Record<string, readonly StaffRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

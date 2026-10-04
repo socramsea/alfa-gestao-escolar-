@@ -118,7 +118,7 @@ portalRouter.get('/me', async (request, response) => {
     pool.query(
       `SELECT s.id, s.full_name, c.name AS current_class_name,
               COALESCE(json_agg(json_build_object(
-                'id', r.id, 'status', r.status, 'campaign_title', rc.title,
+                'id', r.id, 'status', r.status, 'campaign_title', rc.title, 'campaign_kind', rc.kind,
                 'ends_on', rc.ends_on::text, 'review_notes', r.review_notes
               ) ORDER BY rc.created_at DESC) FILTER (WHERE rc.id IS NOT NULL), '[]') AS renewals
          FROM student_guardians sg
@@ -150,7 +150,7 @@ portalRouter.get('/me', async (request, response) => {
 async function loadOwnRequest(guardianId: string, schoolId: string, requestId: string) {
   const { rows } = await pool.query(
     `SELECT r.id, r.status, r.proposed_data, r.guardian_notes, r.review_notes, r.submitted_at,
-            rc.title AS campaign_title, rc.status AS campaign_status, rc.ends_on::text AS ends_on,
+            rc.title AS campaign_title, rc.kind AS campaign_kind, rc.status AS campaign_status, rc.ends_on::text AS ends_on,
             json_build_object(
               'full_name', s.full_name, 'social_name', s.social_name, 'birth_date', s.birth_date::text,
               'cpf', s.cpf, 'address', s.address, 'health_notes', s.health_notes,
