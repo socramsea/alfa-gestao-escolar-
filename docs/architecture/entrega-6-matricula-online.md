@@ -16,7 +16,7 @@ A [Entrega 5](entrega-5-site-e-captacao.md) traz a família até a escola: site,
 
 1. **Regras por escola, versionadas.** Cada escola escolhe o que exige além do básico: CPF da criança, saúde e alergias, CPF dos responsáveis, e-mail, endereço completo e segundo responsável. Também define o texto do regulamento. Cada ficha registra a versão das regras com que foi enviada.
 2. **Sempre exigidos:** nome da criança, um responsável legal, um responsável financeiro e a declaração de veracidade. O CPF, quando informado, precisa ter dígitos verificadores válidos.
-3. **A ficha completa fica na matrícula online.** O cadastro de alunos guarda hoje nome e nascimento; o de responsáveis, nome, telefone e e-mail. Os demais dados (CPF, saúde, endereço, papel financeiro) ficam na ficha aprovada até existir uma ficha do aluno especificada.
+3. **A ficha aprovada alimenta o cadastro.** Revisada em 2026-10-04 (ver "Correções após revisão"): a aprovação grava no aluno o CPF, o nome social, a saúde e o endereço; no responsável, o CPF; e no vínculo, quem é o responsável financeiro. A ficha completa continua guardada na matrícula online.
 4. **O link vale 15 dias.** Gerar outro revoga o anterior. Cinco datas erradas bloqueiam o link e a escola gera um novo.
 5. **Correção pelo mesmo link.** A secretaria pode pedir correção com uma mensagem; a família vê o pedido e reenvia a partir do que já tinha preenchido.
 6. **Ligação com a captação.** A ficha pode nascer de um interessado da Entrega 5. Aprovar marca o interessado como matriculado; recusar marca como desistiu, com o motivo.
@@ -83,6 +83,14 @@ Uma revisão da lógica encontrou falhas que foram reproduzidas pela API e corri
    - A última correção vale para o acesso da família, para o envio e para o aluno criado na aprovação.
    - Corrigir zera as tentativas erradas do link ativo, então a família entra pelo mesmo link.
    - Não há correção depois de aprovada ou recusada, e o histórico é preservado.
+3. **Irmãos compartilham o responsável.** Cada aprovação criava um responsável novo, então a mesma mãe com dois filhos virava dois cadastros. Agora a aprovação reaproveita o responsável já cadastrado na escola:
+   - mesmo CPF é a mesma pessoa;
+   - sem CPF divergente, mesmo nome e mesmo telefone também são, ignorando acentos, maiúsculas, espaços e o código do país;
+   - outro nome no mesmo telefone (a avó, por exemplo) e outro CPF continuam sendo outra pessoa;
+   - o cadastro reaproveitado não é alterado, pois o runtime não faz UPDATE; os dados novos ficam na ficha.
+4. **Os dados da ficha chegam ao cadastro** (migration `011`). Aluno ganhou CPF, nome social, saúde e endereço; responsável, CPF; vínculo, `is_financial`. As colunas são opcionais: nulo quer dizer "não informado", como nos cadastros manuais e nos registros anteriores. O CPF é único por escola, para aluno e para responsável. Por isso, aprovar uma criança cujo CPF já está cadastrado é recusado (409), em vez de criar um aluno duplicado, e a ficha não aceita o mesmo CPF para os dois responsáveis.
+
+Validação das correções, no mesmo ambiente: 132 testes do backend, 23 do frontend e os 7 specs de navegador aprovados. O spec da matrícula online passou a começar com a data de nascimento errada, que a secretaria corrige antes de a família entrar.
 
 ## Pendente no ambiente com Docker
 

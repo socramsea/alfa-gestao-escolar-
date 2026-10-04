@@ -43,7 +43,9 @@ const addressSchema = z.object({ zip_code: optional(line(9).refine(v => /^\d{5}-
 export const submissionSchema = z.object({
   child: z.object({ full_name: line(150), social_name: optional(line(150)), cpf: optional(cpf),
     health_notes: optional(multiline(2000)) }).strict(),
-  guardians: z.array(guardianSchema).min(1).max(2),
+  // Um CPF identifica uma pessoa: dois responsáveis da mesma ficha não podem repeti-lo.
+  guardians: z.array(guardianSchema).min(1).max(2)
+    .refine(gs => { const cpfs = gs.map(g => g.cpf).filter(Boolean); return new Set(cpfs).size === cpfs.length; }),
   address: addressSchema.default({}),
   accept_terms: z.literal(true)
 }).strict();
@@ -74,6 +76,12 @@ export const resources = {
     note: optional(multiline(1000)), class_group_id: z.string().uuid().optional(), level_id: z.string().uuid().optional() })
     .strict().refine(v => v.decision === 'aprovada' ? v.class_group_id && v.level_id : v.note)
 };
+
+const addressFields = ['zip_code','street','number','complement','district','city','state'];
+// Telefone comparável: só dígitos, sem o código do país.
+const phoneKey = v => { const d = v.replace(/\D/g, ''); return d.length > 11 && d.startsWith('55') ? d.slice(2) : d; };
+// Nome comparável: sem acentos, maiúsculas ou espaços repetidos.
+const nameKey = v => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 export const hash = data => createHash('sha256').update(JSON.stringify(data)).digest('hex');
 export const hashToken = token => createHash('sha256').update(token).digest('hex');
@@ -147,6 +155,23 @@ const finders = {
     enrollment_id,created_at FROM public.online_enrollment_reviews WHERE school_id=$1 AND id=$2`, [user.school_id, id])).rows[0]
 };
 
+// Irmãos: reaproveita o responsável já cadastrado na escola. Mesmo CPF é a mesma pessoa; sem CPF divergente,
+// mesmo nome e telefone também. Outro nome no mesmo telefone (a avó, por exemplo) é outra pessoa.
+async function guardianFor(client, user, g) {
+  if (g.cpf) {
+    const { rows:[same] } = await client.query('SELECT id FROM public.guardians WHERE school_id=$1 AND cpf=$2', [user.school_id, g.cpf]);
+    if (same) return same.id;
+  }
+  const { rows } = await client.query(`SELECT id,full_name,phone FROM public.guardians
+    WHERE school_id=$1 AND right(regexp_replace(phone,'[^0-9]','','g'),8)=$2 AND ($3::text IS NULL OR cpf IS NULL)
+    ORDER BY created_at,id`, [user.school_id, phoneKey(g.phone).slice(-8), g.cpf]);
+  const same = rows.find(r => phoneKey(r.phone) === phoneKey(g.phone) && nameKey(r.full_name) === nameKey(g.full_name));
+  if (same) return same.id;
+  const { rows:[created] } = await client.query(`INSERT INTO public.guardians(school_id,full_name,phone,email,cpf)
+    VALUES($1,$2,$3,$4,$5) RETURNING id`, [user.school_id, g.full_name, g.phone, g.email, g.cpf ?? null]);
+  return created.id;
+}
+
 const inserts = {
   async settings(client, user, data) {
     const { rows:[item] } = await client.query(`INSERT INTO public.enrollment_form_settings(school_id,required_fields,terms_text)
@@ -212,15 +237,27 @@ const inserts = {
         JOIN public.class_group_levels gl ON gl.school_id=g.school_id AND gl.class_group_id=g.id AND gl.stage_code=g.stage_code
         WHERE g.school_id=$1 AND g.id=$2 AND gl.level_id=$3`, [user.school_id, data.class_group_id, data.level_id]);
       if (!group) fail(404);
-      const ficha = submission.data;
-      const { rows:[student] } = await client.query(`INSERT INTO public.students(school_id,full_name,birth_date)
-        VALUES($1,$2,$3) RETURNING id`, [user.school_id, ficha.child.full_name, submission.child_birth_date]);
+      const ficha = submission.data, { child } = ficha, address = ficha.address ?? {};
+      // Aluno com CPF já cadastrado na escola viola o índice único e a aprovação é recusada (409).
+      const { rows:[student] } = await client.query(`INSERT INTO public.students(school_id,full_name,birth_date,social_name,cpf,health_notes,
+        address_zip_code,address_street,address_number,address_complement,address_district,address_city,address_state)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+      [user.school_id, child.full_name, submission.child_birth_date, child.social_name ?? null, child.cpf ?? null,
+        child.health_notes ?? null, ...addressFields.map(k => address[k] ?? null)]);
       studentId = student.id;
+      // Trava por telefone e CPF, em ordem fixa: aprovações simultâneas de irmãos não duplicam o responsável.
+      const keys = ficha.guardians.flatMap(g => [`guardian-phone:${user.school_id}:${phoneKey(g.phone)}`,
+        ...(g.cpf ? [`guardian-cpf:${user.school_id}:${g.cpf}`] : [])]);
+      for (const key of [...new Set(keys)].sort()) await lock(client, key);
+      // Se a ficha repetir a mesma pessoa, o vínculo é um só e soma os papéis.
+      const links = new Map();
       for (const g of ficha.guardians) {
-        const { rows:[guardian] } = await client.query(`INSERT INTO public.guardians(school_id,full_name,phone,email)
-          VALUES($1,$2,$3,$4) RETURNING id`, [user.school_id, g.full_name, g.phone, g.email]);
-        await client.query(`INSERT INTO public.student_guardians(school_id,student_id,guardian_id,relationship,is_legal)
-          VALUES($1,$2,$3,$4,$5)`, [user.school_id, studentId, guardian.id, g.relationship, g.is_legal]);
+        const id = await guardianFor(client, user, g), seen = links.get(id);
+        links.set(id, seen ? { ...seen, is_legal: seen.is_legal || g.is_legal, is_financial: seen.is_financial || g.is_financial } : g);
+      }
+      for (const [guardianId, g] of links) {
+        await client.query(`INSERT INTO public.student_guardians(school_id,student_id,guardian_id,relationship,is_legal,is_financial)
+          VALUES($1,$2,$3,$4,$5,$6)`, [user.school_id, studentId, guardianId, g.relationship, g.is_legal, g.is_financial]);
       }
       const { rows:[enrollment] } = await client.query(`INSERT INTO public.enrollments(school_id,student_id,academic_year_id,class_group_id,level_id)
         VALUES($1,$2,$3,$4,$5) RETURNING id`, [user.school_id, studentId, group.academic_year_id, data.class_group_id, data.level_id]);
