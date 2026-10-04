@@ -18,7 +18,7 @@ Até o MVP 1, o caminho tem começo, meio e fim:
 | Quando | O que | Quem |
 |---|---|---|
 | Dom 04, noite | Importação de planilha pronta e no `main` (entrega 7) | Claude |
-| Dom 04, noite | Decidido: servidor na DigitalOcean e domínio próprio. Falta enviar os títulos das colunas da planilha da escola, sem dados | Responsável |
+| Dom 04, noite | Decidido: VPS na Hostinger, no Brasil, e domínio próprio. Falta enviar os títulos das colunas da planilha da escola, sem dados | Responsável |
 | Dom 04, noite | Guia e scripts para colocar no ar ([`deploy/NO-AR.md`](../deploy/NO-AR.md)) | Claude |
 | Seg 05, manhã | Teste completo com Docker na máquina do responsável | Responsável; Claude corrige se falhar |
 | Seg 05 | Criar o servidor e o domínio, colocar no ar e criar as contas dos participantes | Responsável, com o guia |

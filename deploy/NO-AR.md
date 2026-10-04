@@ -4,27 +4,33 @@ Guia da entrega 8 do [roteiro](../docs/ROTEIRO.md): o Alfa Gestão Escolar num s
 
 **Só dados fictícios.** Este servidor é de demonstração. A planilha real de uma escola só entra depois dos critérios de produção ([ADR-005](../docs/decisoes/ADR-005-importacao-de-planilha.md)).
 
-## 1. Criar o servidor na DigitalOcean
+## 1. Contratar a VPS na Hostinger
 
-No painel, clique em **Create → Droplets** e escolha:
+1. No site da Hostinger, escolha **VPS** e um plano com **pelo menos 2 GB de memória**. Confira se há opção de pagamento mensal.
+2. Depois da compra, no painel (**hPanel**), vá em **VPS** e faça a configuração inicial:
 
 | Opção | Escolha |
 |---|---|
-| Região | **New York** (a DigitalOcean não tem datacenter no Brasil) |
-| Imagem | **Ubuntu 24.04 (LTS) x64** |
-| Plano | **Basic → Regular → 2 GB / 1 CPU** |
-| Autenticação | Senha forte ou chave SSH |
+| Localização | **Brasil** (São Paulo) |
+| Sistema | **Sistema operacional simples → Ubuntu 24.04**. Não escolha modelos com painel ou aplicativo, como Docker, Coolify ou CloudPanel: eles ocupam as portas que o sistema usa. |
+| Senha do root | Uma senha forte. Guarde só com você. |
 | Nome | `alfa-gestao` |
 
-Anote o **IP** do servidor, que aparece no painel depois de criado.
+3. Anote o **IP (IPv4)** da VPS, que aparece na página de visão geral da VPS.
+4. Se você ativar o **Firewall** da VPS no hPanel, crie regras liberando as portas **22, 80 e 443 (TCP)**. Sem firewall no hPanel, não precisa fazer nada; o script já protege o servidor.
+
+Em outra empresa, serve qualquer VPS com **Ubuntu 24.04**, acesso root e IPv4 público.
 
 ## 2. Domínio (pode ficar para depois)
 
-- **.com.br:** compre no [Registro.br](https://registro.br).
+- **Comprado na Hostinger** (o mais simples, porque o DNS fica no mesmo painel):
+  1. No hPanel, vá em **Domínios → seu domínio → DNS / Nameservers**.
+  2. Se já existir um registro **A** com nome `@`, **edite** esse registro para o **IP da VPS**. Não crie um segundo.
+  3. Se existir um registro **AAAA** com nome `@`, **apague**. Ele aponta para a página de estacionamento e impede o certificado HTTPS.
+- **Comprado no [Registro.br](https://registro.br)** (.com.br):
   1. Em **DNS**, use os servidores do próprio Registro.br.
-  2. Em **Editar zona**, crie um registro do tipo **A**, com o nome em branco (o próprio domínio) e o valor igual ao **IP do servidor**.
-- **Outra empresa:** crie um registro **A** do domínio (`@`) apontando para o IP do servidor.
-- A propagação costuma levar minutos, mas pode levar algumas horas.
+  2. Em **Editar zona**, crie um registro **A** com o nome em branco e o valor igual ao IP da VPS.
+- A propagação costuma levar minutos, mas pode levar algumas horas. O script confere o DNS antes de instalar e avisa se ainda não estiver certo.
 
 **Sem domínio pronto, siga mesmo assim.** O script usa um endereço gratuito com HTTPS formado pelo IP, por exemplo `164-90-1-2.sslip.io`. Quando o domínio ficar pronto, basta rodar o script de novo informando o domínio.
 
@@ -43,7 +49,7 @@ O repositório é privado. Crie uma chave só de leitura:
 ## 4. Entrar no servidor
 
 Há dois jeitos:
-- no painel da DigitalOcean, abra o Droplet e clique em **Access → Launch Droplet Console**;
+- no hPanel, abra a VPS e use o **Terminal do navegador** (*Browser terminal*);
 - ou, no terminal do seu computador, rode `ssh root@IP_DO_SERVIDOR`.
 
 ## 5. Baixar o sistema e instalar
@@ -122,8 +128,9 @@ Antes de atualizar, o script guarda um backup do banco em `/var/backups/alfa-ges
 | Mensagem ou sintoma | O que fazer |
 |---|---|
 | "o domínio … aponta para …" | O DNS ainda não propagou. Espere ou rode sem domínio. |
-| Montagem das imagens interrompida | Confira se o Droplet tem 2 GB; o script já cria memória extra (swap). |
-| "ainda não responde pela internet" | Veja `journalctl -u caddy --no-pager \| tail -40`. Se você criou um *Cloud Firewall* na DigitalOcean, libere as portas 80 e 443. |
+| Montagem das imagens interrompida | Confira se a VPS tem pelo menos 2 GB; o script já cria memória extra (swap). |
+| "ainda não responde pela internet" | Veja `journalctl -u caddy --no-pager \| tail -40`. Se o **Firewall** da VPS estiver ativo no hPanel, libere as portas 80 e 443. |
+| "tem registro AAAA (IPv6)" | Apague o registro AAAA do domínio no painel de DNS e rode o script de novo depois de alguns minutos. |
 | Ver o estado dos serviços | `docker compose --env-file deploy/.env -f deploy/compose.yml ps` |
 | Ver os erros da API | `docker compose --env-file deploy/.env -f deploy/compose.yml logs --tail 50 api` |
 
@@ -133,4 +140,4 @@ Envie a saída para o Claude, **nunca** o conteúdo de `deploy/.env`, que tem as
 
 - `deploy/.env` guarda as senhas do banco e do sistema, com acesso só do root. Não copie nem envie.
 - Revogue a chave do GitHub quando não precisar mais dela.
-- O servidor fica nos Estados Unidos. Antes de dados reais, revisar a LGPD e os critérios de produção.
+- O servidor fica no Brasil. Mesmo assim, antes de dados reais, cumprir os critérios de produção e revisar a LGPD.

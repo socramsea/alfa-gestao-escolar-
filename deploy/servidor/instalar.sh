@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala ou atualiza o Alfa Gestão Escolar num servidor Ubuntu 24.04 (por exemplo, um Droplet da DigitalOcean),
+# Instala ou atualiza o Alfa Gestão Escolar num servidor Ubuntu 24.04 (por exemplo, uma VPS da Hostinger),
 # com HTTPS automático pelo Caddy. Guia completo: deploy/NO-AR.md.
 #
 # Uso, como root, na pasta do projeto:
@@ -30,6 +30,15 @@ COMPOSE=(docker compose --env-file deploy/.env -f deploy/compose.yml)
 RESOLVED=$(getent ahostsv4 "$DOMAIN" | awk 'NR == 1 { print $1 }' || true)
 [ "$RESOLVED" = "$IP" ] || fail "o domínio $DOMAIN aponta para '${RESOLVED:-nenhum IP}', e este servidor é $IP.
 Crie o registro A do domínio para $IP e espere alguns minutos, ou rode sem domínio para usar ${IP//./-}.sslip.io."
+# Um registro AAAA (IPv6) apontando para outro lugar também impede o certificado: o Let's Encrypt prefere o IPv6.
+IP6=$(ip -6 route get 2606:4700:4700::1111 2>/dev/null | awk '{for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit }}' || true)
+AAAA=$(python3 -c 'import socket, sys
+try: print(" ".join(sorted({a[4][0] for a in socket.getaddrinfo(sys.argv[1], 443, socket.AF_INET6)})))
+except OSError: pass' "$DOMAIN")
+if [ -n "$AAAA" ] && [[ " $AAAA " != *" ${IP6:-sem-ipv6} "* ]]; then
+  fail "o domínio $DOMAIN tem registro AAAA (IPv6) para '$AAAA', que não é este servidor.
+Apague o registro AAAA do domínio no painel de DNS (ou aponte para ${IP6:-o IPv6 deste servidor}) e espere alguns minutos."
+fi
 
 say 'Pacotes do sistema'
 export DEBIAN_FRONTEND=noninteractive
