@@ -9,6 +9,9 @@ O cadastro mínimo de alunos, responsáveis e vínculos está descrito em
 [Entrega 2](../docs/architecture/entrega-2-pessoas-vinculos.md), acessível pela área
 Alunos e responsáveis. Cadastro de responsável não cria conta de acesso.
 
+Matrículas com turma obrigatória estão em [Entrega 3](../docs/architecture/entrega-3-matriculas.md). O cadastro de profissionais e a atribuição às turmas estão em
+[Entrega 4](../docs/architecture/entrega-4-profissionais-atribuicoes.md); o cadastro de profissional também não cria conta de acesso.
+
 Financeiro, pedagógico, renovação, portal familiar, edição/exclusão e
 gestão comercial de módulos não estão implementados neste recorte. Não usar
 esta versão para operar uma escola inteira. Use dados fictícios no piloto.
@@ -148,7 +151,7 @@ do banco não inclui credenciais das roles do cluster; mantenha os segredos
 necessários à recuperação em armazenamento separado e protegido.
 
 Antes de atualizar, faça backup e valide a versão candidata em ambiente de
-teste. A nova API exige migrations 004, 005 e 006. No banco antigo, use janela de manutenção:
+teste. A nova API exige migrations 004 a 007. No banco antigo, use janela de manutenção:
 pare a API, aplique o setup da nova versão e só então inicie a API nova.
 Rollback de migrations de segurança é bloqueado; falha de atualização exige
 investigação ou restauração previamente testada. Não execute `down -v` em banco

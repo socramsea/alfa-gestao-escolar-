@@ -49,3 +49,13 @@ Pessoas com nomes iguais são permitidas. Use nascimento/contato e a identifica�
 ## Matrículas
 
 A tela **Matrículas** usa alunos e estrutura já cadastrados. Escolha aluno, período, turma e grupo/série para confirmar. A regra deste piloto aceita uma matrícula por aluno/período; turma é obrigatória. Não há controle de vagas, cancelamento, transferência ou renovação. O fluxo foi executado no piloto por navegador automatizado em 2026-10-04 (aluno `Aluno Fictício Piloto`, matrícula em 2027/T1); o responsável confirmou na tela que a matrícula aparece na lista.
+
+## Profissionais e atribuições
+
+1. Clique em **Profissionais** no topo.
+2. Na aba **Profissionais**, cadastre `Professora Exemplo`; telefone e e-mail podem ficar vazios.
+3. Na aba **Atribuições**, selecione a profissional, a turma `T1 · 2027`, o papel e a data de início dentro do período letivo. A data de fim é opcional.
+4. Salve e confira a linha na lista, com a situação `Em aberto`.
+5. Em **Encerrar atribuição**, selecione a atribuição, informe o último dia e confirme; a situação passa a `Encerrada`.
+
+O cadastro não cria conta de acesso. A mesma profissional não pode ter duas atribuições na mesma turma com datas que se cruzam. Não há edição nem exclusão; disciplinas e horários ficam para entregas posteriores. O fluxo ainda precisa ser conferido no navegador pelo responsável.

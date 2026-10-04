@@ -36,7 +36,7 @@ export default function EnrollmentPage(){
   return <main className="dashboard-page">
     <header className="topbar"><div><strong>Alfa Gestão Escolar</strong><span>{user.name}</span></div><button className="secondary-button" onClick={logout}>Sair</button></header>
     <div className="page-content">
-      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas" aria-current="page">Matrículas</Link></nav>
+      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas" aria-current="page">Matrículas</Link><Link to="/secretaria/profissionais">Profissionais</Link></nav>
       <h1>Matrículas</h1><p>Confirme a matrícula de um aluno em uma turma e grupo/série do período. Use dados fictícios neste piloto.</p>
       {success&&<p className="success-message" role="status">{success}</p>}
       {error&&<div className="error-message" role="alert">{error} <button className="secondary-button" onClick={()=>setRevision(n=>n+1)}>Atualizar dados</button></div>}

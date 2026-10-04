@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { structureRequest } from './structure-api.js';
 import { peopleRequest } from './people-api.js';
 import { enrollmentRequest } from './enrollment-api.js';
+import { staffRequest } from './staff-api.js';
 
 const AuthContext = createContext(null);
 const KEY = 'alfa.session';
@@ -99,6 +100,18 @@ export function AuthProvider({ children }) {
       throw err;
     }
   }, []);
-  return <AuthContext.Provider value={{ user, loading, error, login, logout, retry: validate, structure, people, enroll }}>{children}</AuthContext.Provider>;
+  const staff = useCallback(async (path, options) => {
+    const activeToken = token.current;
+    if (!activeToken) throw new Error('Entre novamente para continuar.');
+    try {
+      const result = await staffRequest(activeToken, path, options);
+      if (activeToken !== token.current) throw new Error('Sessão alterada. Entre novamente.');
+      return result;
+    } catch (err) {
+      if (err.status === 401 && activeToken === token.current) logout();
+      throw err;
+    }
+  }, []);
+  return <AuthContext.Provider value={{ user, loading, error, login, logout, retry: validate, structure, people, enroll, staff }}>{children}</AuthContext.Provider>;
 }
 export const useAuth = () => useContext(AuthContext);

@@ -75,15 +75,19 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         subprocess.run(['npm','run','test:e2e'],cwd=root/'frontend',env=browser_env,check=True)
         identity,_ = call('/api/auth/login',{'email':values['ADMIN_EMAIL'],'password':values['ADMIN_PASSWORD']})
         token = identity['token']
-        # Os specs de estrutura e de matrícula criam uma turma cada; pessoas e matrícula criam um aluno cada.
+        # Os specs de estrutura, matrícula e profissionais criam uma turma cada; pessoas e matrícula criam um aluno cada.
         before,_ = call('/api/structure/class-groups',token=token)
-        assert len(before['items'])==2
+        assert len(before['items'])==3
         people_before = {}
         for resource, expected in (('students',2),('guardians',1),('student-guardians',1)):
             people_before[resource],_ = call('/api/people/'+resource,token=token)
             assert len(people_before[resource]['items'])==expected
         enrollments_before,_ = call('/api/enrollments',token=token)
         assert len(enrollments_before['items'])==1
+        staff_before = {}
+        for resource in ('members','assignments','assignment-endings'):
+            staff_before[resource],_ = call('/api/staff/'+resource,token=token)
+            assert len(staff_before[resource]['items'])==1
         run('restart','api')
         for attempt in range(30):
             try:
@@ -94,6 +98,9 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
                     assert actual==expected
                 actual,_ = call('/api/enrollments',token=token)
                 assert actual==enrollments_before
+                for resource, expected in staff_before.items():
+                    actual,_ = call('/api/staff/'+resource,token=token)
+                    assert actual==expected
                 break
             except (OSError,AssertionError):
                 if attempt==29: raise
@@ -103,8 +110,9 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         run('exec','-T','postgres','pg_restore','-U','postgres','--exit-on-error','-d','restore_probe',input=dump)
         count = run('exec','-T','postgres','psql','-U','postgres','-d','restore_probe','-Atc',
                     'SELECT count(*) FROM class_groups;',capture_output=True,text=True).stdout.strip()
-        assert count=='2'
-        for table, expected in (('students','2'),('guardians','1'),('student_guardians','1'),('enrollments','1'),('enrollment_events','1')):
+        assert count=='3'
+        for table, expected in (('students','2'),('guardians','1'),('student_guardians','1'),('enrollments','1'),('enrollment_events','1'),
+                                ('staff_members','1'),('class_group_staff','1'),('class_group_staff_endings','1'),('staff_events','3')):
             count = run('exec','-T','postgres','psql','-U','postgres','-d','restore_probe','-Atc',
                         f'SELECT count(*) FROM {table};',capture_output=True,text=True).stdout.strip()
             assert count==expected

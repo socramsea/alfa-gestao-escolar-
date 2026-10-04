@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import SecretariaDashboard from './pages/StructurePage.jsx';
 import PeoplePage from './pages/PeoplePage.jsx';
 import EnrollmentPage from './pages/EnrollmentPage.jsx';
+import StaffPage from './pages/StaffPage.jsx';
 import { AuthProvider, canAccessSecretaria, useAuth } from './auth/AuthContext.jsx';
 
 function Protected() {
@@ -15,9 +16,9 @@ function Unavailable() {
   const { logout } = useAuth();
   return <main className="login-page"><section className="login-card"><h1>Acesso indisponível</h1><p>Esta área ainda não está habilitada para seu perfil.</p><button onClick={logout}>Sair</button></section></main>;
 }
-function Secretaria({ people = false, enrollment = false }) {
+function Secretaria({ people = false, enrollment = false, staff = false }) {
   const { user } = useAuth();
-  return canAccessSecretaria(user) ? (enrollment ? <EnrollmentPage /> : people ? <PeoplePage /> : <SecretariaDashboard />) : <Unavailable />;
+  return canAccessSecretaria(user) ? (staff ? <StaffPage /> : enrollment ? <EnrollmentPage /> : people ? <PeoplePage /> : <SecretariaDashboard />) : <Unavailable />;
 }
 export default function App() {
   return <AuthProvider><Routes>
@@ -26,6 +27,7 @@ export default function App() {
       <Route path="/secretaria" element={<Secretaria />} />
       <Route path="/secretaria/pessoas" element={<Secretaria people />} />
       <Route path="/secretaria/matriculas" element={<Secretaria enrollment />} />
+      <Route path="/secretaria/profissionais" element={<Secretaria staff />} />
       <Route path="/responsavel" element={<Unavailable />} />
       <Route path="/renovacao" element={<Unavailable />} />
     </Route>
