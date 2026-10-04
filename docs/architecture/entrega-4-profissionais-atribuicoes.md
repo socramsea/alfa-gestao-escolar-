@@ -1,6 +1,6 @@
 # Entrega 4 — profissionais e atribuições às turmas
 
-Status: implementação do recorte local concluída; gate local isolado e smoke Docker de deploy aprovados em 2026-10-04; piloto local atualizado na mesma data; aceite funcional pelo responsável pendente.
+Status: implementação do recorte local concluída; gate local isolado e smoke Docker de deploy aprovados em 2026-10-04; piloto local atualizado e fluxo executado nele por navegador automatizado na mesma data; conferência visual pelo responsável pendente.
 
 ## Por que esta entrega
 
@@ -71,4 +71,6 @@ A validação deverá repetir a matriz das entregas anteriores: isolamento entre
 
 Piloto local, também em 2026-10-04: backup `piloto-antes-profissionais-*.dump`, API parada, setup aplicou a migration 007 e API e frontend subiram com as imagens novas. Contagem e conteúdo de todas as tabelas anteriores ficaram idênticos antes e depois. As tabelas de profissionais começam vazias.
 
-Limites: nenhum profissional foi cadastrado no piloto. O resultado local não certifica publicação remota. O aceite funcional pelo responsável está pendente.
+Em seguida, um roteiro de navegador automatizado executou no piloto (`http://127.0.0.1:8088`) o cadastro de `Professora Fictícia Piloto`, a atribuição como regente à turma T1 de 2027 a partir de 01/02/2027, a recusa de uma segunda atribuição sobreposta (409) e o encerramento em 30/06/2027, com persistência após recarregar. O banco do piloto ficou com 1 profissional, 1 atribuição, 1 encerramento e 3 eventos de auditoria.
+
+Limites: o responsável informou ter testado antes dessa execução, mas o banco e o log de acessos do piloto não mostravam nenhum cadastro de profissional naquele momento; a conferência visual do resultado continua pendente. O resultado local não certifica publicação remota.

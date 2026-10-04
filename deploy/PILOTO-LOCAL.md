@@ -58,4 +58,4 @@ A tela **Matrículas** usa alunos e estrutura já cadastrados. Escolha aluno, pe
 4. Salve e confira a linha na lista, com a situação `Em aberto`.
 5. Em **Encerrar atribuição**, selecione a atribuição, informe o último dia e confirme; a situação passa a `Encerrada`.
 
-O cadastro não cria conta de acesso. A mesma profissional não pode ter duas atribuições na mesma turma com datas que se cruzam. Não há edição nem exclusão; disciplinas e horários ficam para entregas posteriores. O fluxo ainda precisa ser conferido no navegador pelo responsável.
+O cadastro não cria conta de acesso. A mesma profissional não pode ter duas atribuições na mesma turma com datas que se cruzam. Não há edição nem exclusão; disciplinas e horários ficam para entregas posteriores. O fluxo foi executado no piloto por navegador automatizado em 2026-10-04 (`Professora Fictícia Piloto`, turma T1, encerrada em 30/06/2027); falta a conferência visual pelo responsável.
