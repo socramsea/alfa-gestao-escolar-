@@ -13,8 +13,8 @@ O monolito JS é a linha oficial: backend Node.js + Express sobre PostgreSQL com
 | Branch | Situação |
 |---|---|
 | `main` | Linha oficial. |
-| `monolito-js`, `feat/profissionais-atribuicoes` | Mesmo commit; absorvidas pelo `main` com a adoção da linha oficial. Podem ser apagadas depois que o PR #1 apontar para o `main`. |
-| `claude/entrega-5-site`, `claude/entrega-6-matricula-online`, `claude/correcoes-logica-matricula` | Entregas 5 e 6 e suas correções, aguardando entrada no `main` nesta ordem. |
+| `monolito-js`, `feat/profissionais-atribuicoes`, `minha-maquina` | Mesmo commit (entrega 4); absorvidas pelo `main`. Podem ser apagadas. |
+| `claude/sleepy-hamilton-9df3wc`, `claude/entrega-5-site`, `claude/entrega-6-matricula-online`, `claude/correcoes-logica-matricula` | Mescladas no `main`. Podem ser apagadas. |
 | `claude/prototipo-ts`, `claude/pode-entra-pc-ticyor` | Mesmo commit. Protótipo TypeScript paralelo, **arquivado**: não recebe mais trabalho. Fica como referência para a entrega 7: o fluxo de renovação, a decisão "cadastro completado pelo responsável via link pessoal" e a demonstração `docs/demo/demo-renovacao.html`. |
 
 O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da adoção do monolito.
@@ -28,19 +28,21 @@ O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da ado�
 | 2 | [Pessoas e vínculos](architecture/entrega-2-pessoas-vinculos.md): alunos, responsáveis, vínculo | Começo | No `main` |
 | 3 | [Matrículas](architecture/entrega-3-matriculas.md): aluno em turma por período | Começo | No `main` |
 | 4 | [Profissionais e atribuições](architecture/entrega-4-profissionais-atribuicoes.md) | Começo | No `main` |
-| 5 | Site da escola, pré-matrícula e captação | Meio | Em revisão: [PR #1](https://github.com/socramsea/alfa-gestao-escolar-/pull/1) |
-| 6 | Matrícula online de aluno novo pela família | Meio | Branch pronta, sem PR; abrir depois da 5 |
-| 6.1 | Correções de lógica da captação e da matrícula online | Meio | Em revisão: [PR #2](https://github.com/socramsea/alfa-gestao-escolar-/pull/2), depois da 6 |
+| 5 | [Site da escola, pré-matrícula e captação](architecture/entrega-5-site-e-captacao.md) | Meio | No `main` ([PR #1](https://github.com/socramsea/alfa-gestao-escolar-/pull/1)) |
+| 6 | [Matrícula online de aluno novo pela família](architecture/entrega-6-matricula-online.md) | Meio | No `main` ([PR #4](https://github.com/socramsea/alfa-gestao-escolar-/pull/4)) |
+| 6.1 | [Correções de lógica da captação e da matrícula online](architecture/entrega-6-matricula-online.md#correções-após-revisão-2026-10-04) | Meio | No `main` ([PR #2](https://github.com/socramsea/alfa-gestao-escolar-/pull/2)) |
 | 7 | Renovação de matrícula: abertura do período, prévia, confirmação pela família, análise e aprovação, matrícula do novo ano, histórico | Fim | Proposta; confirmar antes de iniciar |
 | 8 | Perfis e permissões: secretaria sem acesso administrativo total e, se for a decisão, conta do responsável | Fim | Proposta; confirmar antes de iniciar |
 | 9 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | Fim | Proposta; depende de decisão |
 | 10 | Aceite do MVP: dados fictícios da Alfa Reis, fluxo completo executado, critérios abaixo, gate com Docker, smoke e piloto | Fim | — |
 
+As entregas 5, 6 e 6.1 passaram nos testes sem Docker. O gate com Docker, o `deploy/smoke.py` e a atualização do piloto ainda não foram executados para elas; faça isso antes de atualizar o piloto, sem esperar a entrega 10.
+
 Depois do MVP, na ordem da visão do produto: pedagógico, financeiro e produção. Cada um entra neste roteiro antes de começar.
 
 ## Critérios de aceite do MVP
 
-Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-critérios-de-aceite-do-mvp). A situação considera o `main` e as entregas em revisão.
+Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-critérios-de-aceite-do-mvp). A situação considera o que está no `main`.
 
 | Critério | Situação |
 |---|---|
@@ -65,13 +67,12 @@ Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-crit�
 
 ## Decisões pendentes
 
-Cada uma vira um ADR quando for tomada.
+Cada uma vira um ADR quando for tomada. Já decididas na mesclagem de 2026-10-04: as 7 decisões propostas da entrega 5 e a revisão da decisão 3 da entrega 6 (dados da ficha no cadastro, PR #2).
 
 1. **Acesso do responsável na renovação:** pelo link pessoal com a data de nascimento, como na matrícula online, ou por conta própria. Define o desenho das entregas 7 e 8.
 2. **Perfis:** quais papéis existem além do administrador (secretaria, direção, coordenação…) e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
 3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 9).
 4. **Recusa da escola na captação:** hoje aparece como "desistiu", misturando recusa da escola com desistência da família.
-5. **Dados da ficha no cadastro:** o PR #2 grava CPF, saúde, endereço e responsável financeiro no cadastro, revisando a decisão 3 da entrega 6. Confirmar na revisão do PR.
 
 ## Regras de trabalho
 
