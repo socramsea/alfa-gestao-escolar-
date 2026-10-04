@@ -75,15 +75,16 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         subprocess.run(['npm','run','test:e2e'],cwd=root/'frontend',env=browser_env,check=True)
         identity,_ = call('/api/auth/login',{'email':values['ADMIN_EMAIL'],'password':values['ADMIN_PASSWORD']})
         token = identity['token']
-        # Os specs de estrutura, matrícula e profissionais criam uma turma cada; pessoas e matrícula criam um aluno cada.
+        # Os specs de estrutura, matrícula, profissionais e matrícula online criam uma turma cada; pessoas, matrícula
+        # e matrícula online criam um aluno cada; a matrícula online aprovada cria responsável, vínculo e matrícula.
         before,_ = call('/api/structure/class-groups',token=token)
-        assert len(before['items'])==3
+        assert len(before['items'])==4
         people_before = {}
-        for resource, expected in (('students',2),('guardians',1),('student-guardians',1)):
+        for resource, expected in (('students',3),('guardians',2),('student-guardians',2)):
             people_before[resource],_ = call('/api/people/'+resource,token=token)
             assert len(people_before[resource]['items'])==expected
         enrollments_before,_ = call('/api/enrollments',token=token)
-        assert len(enrollments_before['items'])==1
+        assert len(enrollments_before['items'])==2
         staff_before = {}
         for resource in ('members','assignments','assignment-endings'):
             staff_before[resource],_ = call('/api/staff/'+resource,token=token)
@@ -93,6 +94,8 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         assert len(leads_before['items'])==1 and leads_before['items'][0]['status']=='visitou'
         site_before,_ = call('/api/admissions/site',token=token)
         assert site_before['current']['published']
+        online_before,_ = call('/api/online-enrollments/applications',token=token)
+        assert len(online_before['items'])==1 and online_before['items'][0]['state']=='aprovada'
         run('restart','api')
         for attempt in range(30):
             try:
@@ -110,6 +113,8 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
                 assert actual==leads_before
                 actual,_ = call('/api/admissions/site',token=token)
                 assert actual==site_before
+                actual,_ = call('/api/online-enrollments/applications',token=token)
+                assert actual==online_before
                 break
             except (OSError,AssertionError):
                 if attempt==29: raise
@@ -119,11 +124,14 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         run('exec','-T','postgres','pg_restore','-U','postgres','--exit-on-error','-d','restore_probe',input=dump)
         count = run('exec','-T','postgres','psql','-U','postgres','-d','restore_probe','-Atc',
                     'SELECT count(*) FROM class_groups;',capture_output=True,text=True).stdout.strip()
-        assert count=='3'
-        for table, expected in (('students','2'),('guardians','1'),('student_guardians','1'),('enrollments','1'),('enrollment_events','1'),
+        assert count=='4'
+        for table, expected in (('students','3'),('guardians','2'),('student_guardians','2'),('enrollments','2'),('enrollment_events','1'),
                                 ('staff_members','1'),('class_group_staff','1'),('class_group_staff_endings','1'),('staff_events','3'),
                                 ('school_site_addresses','1'),('school_site_versions','1'),('visit_slots','1'),('admission_leads','1'),
-                                ('visit_bookings','1'),('visit_booking_outcomes','1'),('admission_lead_updates','1'),('admission_events','4')):
+                                ('visit_bookings','1'),('visit_booking_outcomes','1'),('admission_lead_updates','1'),('admission_events','4'),
+                                ('enrollment_form_settings','1'),('online_enrollments','1'),('online_enrollment_links','1'),
+                                ('online_enrollment_access_attempts','5'),('online_enrollment_submissions','1'),
+                                ('online_enrollment_reviews','1'),('online_enrollment_events','4')):
             count = run('exec','-T','postgres','psql','-U','postgres','-d','restore_probe','-Atc',
                         f'SELECT count(*) FROM {table};',capture_output=True,text=True).stdout.strip()
             assert count==expected

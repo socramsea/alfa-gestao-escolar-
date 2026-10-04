@@ -47,7 +47,7 @@ try {
     JWT_SECRET: secret(), ADMIN_EMAIL: 'admin@alfareis.test', ADMIN_PASSWORD: secret(),
     CORS_ORIGINS: 'http://localhost:5173', TEST_ALLOW_MUTATION: 'fictional-fixtures',
     // A suíte faz dezenas de envios públicos; o limite real é coberto por teste próprio.
-    PUBLIC_LEADS_PER_WINDOW: '1000',
+    PUBLIC_LEADS_PER_WINDOW: '1000', FAMILY_REQUESTS_PER_WINDOW: '5000',
     TEST_BASE_URL: `http://127.0.0.1:${apiPort}` };
   console.log('GATE: PostgreSQL Docker limpo em porta isolada; dados ficticios; armazenamento tmpfs.');
   const migrationOptions = { databaseUrl: adminUrl, dir: 'migrations', direction: 'up', migrationsTable: 'pgmigrations',

@@ -71,3 +71,13 @@ O cadastro não cria conta de acesso. A mesma profissional não pode ter duas at
 7. Recarregue a página e confira que tudo continua lá.
 
 A pré-matrícula não cria aluno nem matrícula. Fotos são opcionais: sem foto, o site mostra uma ilustração.
+
+## Matrícula online
+
+1. Em **Captação**, abra a aba **Matrícula online** e clique em **Regras da escola**. Marque o que a escola exige, escreva um regulamento fictício e salve.
+2. Clique em **Nova ficha**: criança fictícia, nascimento, responsável e WhatsApp. Depois clique em **Gerar link para a família** e copie a mensagem.
+3. Abra o link no celular ou numa janela anônima. Confirme a data de nascimento, complete a ficha, aceite e envie.
+4. Volte à aba **Matrícula online**, filtre **Para analisar**, abra a ficha, escolha turma e série/grupo e clique em **Aprovar e matricular**.
+5. Confira em **Matrículas** que a criança aparece na turma. No link da família, a situação passa a "Matrícula confirmada".
+
+Também é possível começar pelo interessado: no detalhe da Captação, use **Iniciar matrícula online**.
