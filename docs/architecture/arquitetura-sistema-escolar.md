@@ -183,6 +183,8 @@ Este documento não certifica conformidade legal nem define prazos legais de ret
 
 ## 9. Sequência de implementação
 
+> Registro da sequência original. A sequência vigente e a situação de cada entrega estão em [`docs/ROTEIRO.md`](../ROTEIRO.md) ([ADR-003](../decisoes/ADR-003-linha-oficial-e-roteiro-unico.md)).
+
 | Entrega | Resultado necessário para avançar |
 | --- | --- |
 | 0 — Fundação existente | Revalidar os controles na mudança; relatórios antigos não substituem execução atual |
@@ -231,10 +233,10 @@ será inventada para preencher essas lacunas.
 
 ## 12. Estado real e documentos de referência
 
-A fundação contém autenticação, autorização e isolamento. O MVP de estrutura
-escolar foi iniciado com migration 004, API, interface e pacote Docker:
-ver [execução e limites](../../deploy/README.md). Os demais módulos deste documento
-continuam sendo arquitetura alvo, sem declaração de implementação.
+O que já está implementado, o que está em revisão e o que falta ficam em
+[`docs/ROTEIRO.md`](../ROTEIRO.md); a execução e os limites do piloto, em
+[`deploy/README.md`](../../deploy/README.md). Os módulos deste documento ainda não
+entregues continuam sendo arquitetura alvo.
 O [relatório de autenticação](auth-hardening-report.md) registra validações
 históricas e seus limites; esta consolidação não repetiu testes de banco.
 

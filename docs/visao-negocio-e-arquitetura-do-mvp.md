@@ -150,6 +150,8 @@ O responsável só poderá acessar os alunos vinculados a ele por meio da relaç
 
 ## 7. Ordem oficial de desenvolvimento
 
+> Registro da ordem original. A sequência vigente está em [`docs/ROTEIRO.md`](ROTEIRO.md) ([ADR-003](decisoes/ADR-003-linha-oficial-e-roteiro-unico.md)).
+
 ### Fase 0 — Fundamentos do sistema
 
 - Git e branches;
@@ -337,6 +339,8 @@ A aprovação de produção deve ser registrada formalmente e não pode ser infe
 - [ ] Nenhum dado real é utilizado no Demo.
 
 ## 13. Próxima ação aprovada
+
+> Concluída: a fase 0 foi entregue pela linha oficial. A próxima ação vigente está em [`docs/ROTEIRO.md`](ROTEIRO.md).
 
 A próxima ação do projeto é executar a **Fase 0 — Fundamentos do sistema**.
 
