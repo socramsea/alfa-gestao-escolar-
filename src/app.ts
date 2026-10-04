@@ -1,4 +1,5 @@
 import cors from 'cors';
+import path from 'node:path';
 import express, { Router } from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
@@ -62,6 +63,15 @@ staff.use('/visit-slots', visitSlotsRouter);
 api.use(staff);
 
 app.use('/api', api);
+
+if (env.WEB_DIST_DIR) {
+  const webDir = path.resolve(env.WEB_DIST_DIR);
+  app.use(express.static(webDir, { index: false, maxAge: '1h' }));
+  // Rotas da interface (React Router) devolvem o index.html.
+  app.get(/^\/(?!api\/).*/, (_request, response) => {
+    response.sendFile(path.join(webDir, 'index.html'));
+  });
+}
 
 app.use((_request, response) => {
   response.status(404).json({ error: 'Rota não encontrada' });

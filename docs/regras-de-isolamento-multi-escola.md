@@ -167,6 +167,12 @@ A matriz em vigor está em `src/modules/access/permissions.ts`, que é a fonte �
 | `renewals:review` (aprovar/rejeitar) | ✓ | | ✓ | | | |
 | `dashboard:read` | ✓ | ✓ | ✓ | | | |
 | `audit:read` | ✓ | ✓ | | | | |
+| `units:manage` | ✓ | | | | | |
+| `admissions:read` (captação) | ✓ | ✓ | ✓ | | | |
+| `admissions:manage` | ✓ | | ✓ | | | |
+| `site:manage` (site público) | ✓ | | ✓ | | | |
+
+As rotas `/api/public/*` são abertas. Elas só expõem o conteúdo de sites publicados e só aceitam a criação de pré-matrículas (com consentimento e limite de envios). Nenhuma rota pública lê dados de alunos ou responsáveis.
 
 O responsável não é usuário da equipe. Ele acessa o portal por link pessoal (ADR-002) e só enxerga alunos vinculados a ele em `student_guardians`. Uma tentativa de acessar outro aluno retorna `404`, sem revelar que o registro existe.
 

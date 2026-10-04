@@ -4,10 +4,14 @@ import { ROLE_LABELS } from '../labels';
 
 const LINKS = [
   { to: '/app', label: 'Painel', permission: 'dashboard:read', end: true },
-  { to: '/app/renovacao', label: 'Renovação', permission: 'renewals:read' },
+  { to: '/app/captacao', label: 'Captação', permission: 'admissions:read' },
+  { to: '/app/visitas', label: 'Visitas', permission: 'admissions:read' },
+  { to: '/app/renovacao', label: 'Matrículas', permission: 'renewals:read' },
   { to: '/app/alunos', label: 'Alunos', permission: 'students:read' },
   { to: '/app/importar', label: 'Importar lista', permission: 'students:manage' },
   { to: '/app/turmas', label: 'Turmas', permission: 'academic:read' },
+  { to: '/app/site', label: 'Site da escola', permission: 'site:manage' },
+  { to: '/app/unidades', label: 'Unidades', permission: 'school:read' },
 ];
 
 export function Layout() {

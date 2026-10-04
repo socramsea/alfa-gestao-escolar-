@@ -11,7 +11,15 @@ type PortalMe = {
     id: string;
     full_name: string;
     current_class_name: string | null;
-    renewals: { id: string; status: string; status_label: string; campaign_title: string; ends_on: string; review_notes: string | null }[];
+    renewals: {
+      id: string;
+      status: string;
+      status_label: string;
+      campaign_title: string;
+      campaign_kind: 'renewal' | 'admission';
+      ends_on: string;
+      review_notes: string | null;
+    }[];
   }[];
 };
 
@@ -19,6 +27,7 @@ type RenewalDetail = {
   id: string;
   status: string;
   campaign_title: string;
+  campaign_kind: 'renewal' | 'admission';
   review_notes: string | null;
   can_submit: boolean;
   proposed_data: FormData | null;
@@ -167,7 +176,7 @@ export function Portal() {
                     )}
                     {renewal.status === 'approved' && (
                       <p className="small" style={{ marginTop: '0.75rem', marginBottom: 0 }}>
-                        Renovação confirmada pela escola.
+                        {renewal.campaign_kind === 'admission' ? 'Matrícula confirmada. Bem-vindos à escola!' : 'Renovação confirmada pela escola.'}
                       </p>
                     )}
                     {renewal.status !== 'approved' && renewal.status !== 'rejected' && (
@@ -322,7 +331,11 @@ function RenewalForm({
         ← Voltar
       </button>
       <h1>{detail.campaign_title}</h1>
-      <p className="muted">Confira os dados e corrija o que estiver diferente. Leva cerca de 3 minutos.</p>
+      <p className="muted">
+        {detail.campaign_kind === 'admission'
+          ? 'Complete os dados da criança e os seus. Leva cerca de 5 minutos.'
+          : 'Confira os dados e corrija o que estiver diferente. Leva cerca de 3 minutos.'}
+      </p>
       {detail.review_notes && detail.status === 'changes_requested' && (
         <div className="alert alert-warning">
           <strong>A escola pediu:</strong> {detail.review_notes}
@@ -413,7 +426,10 @@ function RenewalForm({
 
         <label className="checkbox" style={{ marginBottom: '1rem' }}>
           <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
-          <span>Declaro que as informações são verdadeiras e desejo renovar a matrícula.</span>
+          <span>
+            Declaro que as informações são verdadeiras e desejo {detail.campaign_kind === 'admission' ? 'efetivar' : 'renovar'} a
+            matrícula.
+          </span>
         </label>
 
         <button className="btn btn-primary btn-block" disabled={!accepted || busy || !detail.can_submit}>

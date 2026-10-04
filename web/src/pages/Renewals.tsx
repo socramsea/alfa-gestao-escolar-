@@ -9,6 +9,8 @@ import { STATUS_LABELS, formatDate, formatDateTime, formatPhone } from '../label
 type Campaign = {
   id: string;
   title: string;
+  kind: 'renewal' | 'admission';
+  unit_name: string | null;
   status: 'draft' | 'open' | 'closed';
   starts_on: string;
   ends_on: string;
@@ -82,10 +84,11 @@ export function Renewals() {
     <>
       <div className="page-header">
         <div>
-          <h1>Renovação de matrícula</h1>
+          <h1>{campaign?.kind === 'admission' ? 'Matrícula de novos alunos' : 'Renovação de matrícula'}</h1>
           {campaign && (
             <p className="muted">
-              {campaign.title} · {formatDate(campaign.starts_on)} a {formatDate(campaign.ends_on)} ·{' '}
+              {campaign.title} · {campaign.unit_name ?? 'Todas as unidades'} · {formatDate(campaign.starts_on)} a{' '}
+              {formatDate(campaign.ends_on)} ·{' '}
               {campaign.status === 'open' ? 'Aberta' : campaign.status === 'draft' ? 'Rascunho' : 'Encerrada'}
             </p>
           )}
@@ -101,6 +104,7 @@ export function Renewals() {
               >
                 {campaigns.data.map((item) => (
                   <option key={item.id} value={item.id}>
+                    {item.kind === 'admission' ? 'Novos · ' : 'Renovação · '}
                     {item.title}
                   </option>
                 ))}
@@ -113,9 +117,9 @@ export function Renewals() {
             )}
             {campaign?.status === 'open' && (
               <>
-                <button className="btn" onClick={() => changeCampaign('sync')} title="Inclui alunos cadastrados depois da abertura">
+                {campaign.kind === 'renewal' && <button className="btn" onClick={() => changeCampaign('sync')} title="Inclui alunos cadastrados depois da abertura">
                   Incluir novos alunos
-                </button>
+                </button>}
                 <button className="btn btn-danger" onClick={() => changeCampaign('close')}>
                   Encerrar
                 </button>
@@ -132,10 +136,10 @@ export function Renewals() {
 
       {!campaign && (
         <div className="card empty">
-          <p>Nenhum período de renovação criado.</p>
+          <p>Nenhum período de matrícula ou renovação criado.</p>
           {can('renewals:manage') && (
             <button className="btn btn-primary" onClick={() => setCreating(true)}>
-              Criar período de renovação
+              Criar período
             </button>
           )}
         </div>
@@ -230,7 +234,8 @@ export function Renewals() {
 function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
   const { api } = useAuth();
   const years = useLoad(() => api<{ data: { id: string; year: number }[] }>('/api/school-years').then((r) => r.data), [api]);
-  const [form, setForm] = useState({ school_year_id: '', title: '', starts_on: '', ends_on: '' });
+  const units = useLoad(() => api<{ data: { id: string; name: string }[] }>('/api/units').then((r) => r.data), [api]);
+  const [form, setForm] = useState({ kind: 'renewal', unit_id: '', school_year_id: '', title: '', starts_on: '', ends_on: '' });
   const [error, setError] = useState<string | null>(null);
 
   const submit = async (event: FormEvent) => {
@@ -240,7 +245,12 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
       const year = years.data?.find((item) => item.id === yearId)?.year;
       const created = await api<{ id: string }>('/api/renewal-campaigns', {
         method: 'POST',
-        body: { ...form, school_year_id: yearId, title: form.title || `Renovação de Matrícula ${year}` },
+        body: {
+          ...form,
+          unit_id: form.unit_id || null,
+          school_year_id: yearId,
+          title: form.title || `${form.kind === 'admission' ? 'Matrícula' : 'Renovação de Matrícula'} ${year}`,
+        },
       });
       onCreated(created.id);
     } catch (reason) {
@@ -249,9 +259,29 @@ function NewCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreat
   };
 
   return (
-    <Modal title="Novo período de renovação" onClose={onClose}>
+    <Modal title="Novo período" onClose={onClose}>
       <form onSubmit={submit}>
         <ErrorAlert message={error ?? years.error} />
+        <div className="form-row">
+          <div className="field">
+            <label htmlFor="kind">Tipo</label>
+            <select id="kind" value={form.kind} onChange={(event) => setForm({ ...form, kind: event.target.value })}>
+              <option value="renewal">Renovação (alunos atuais)</option>
+              <option value="admission">Matrícula de novos alunos</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="unit">Unidade</label>
+            <select id="unit" value={form.unit_id} onChange={(event) => setForm({ ...form, unit_id: event.target.value })}>
+              <option value="">Todas as unidades</option>
+              {units.data?.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="field">
           <label htmlFor="year">Ano letivo de destino</label>
           <select id="year" value={form.school_year_id} onChange={(event) => setForm({ ...form, school_year_id: event.target.value })}>

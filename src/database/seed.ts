@@ -10,7 +10,16 @@ import { generateOpaqueToken, hashToken } from '../modules/auth/tokens.js';
 import type { StaffRole } from '../modules/access/permissions.js';
 import { approveRequest, lockRequest, syncCampaignRequests, transition } from '../modules/renewals/service.js';
 import { createStudent } from '../modules/students/service.js';
+import type { PoolClient } from 'pg';
+import {
+  type LeadStatus,
+  LEAD_SOURCES,
+  bookVisit,
+  changeLeadStatus,
+  createLead,
+} from '../modules/admissions/service.js';
 import { withTransaction } from '../shared/db.js';
+import { DEMO_SITE_CONTENT } from './demo-site.js';
 import { pool } from './pool.js';
 
 export const DEMO_PASSWORD = 'AlfaDemo2026';
@@ -74,10 +83,25 @@ async function seed() {
     );
     const schoolId = school.rows[0].id;
 
+    // Unidade atual (sede) e a nova unidade, que é a referência digital.
+    const units: Record<string, string> = {};
+    for (const unit of [
+      { slug: 'centro', name: 'Unidade Centro', street: 'Rua das Flores (fictícia)', number: '120', district: 'Centro', whatsapp: '11930000000', accepting: false },
+      { slug: 'jardim', name: 'Unidade Jardim (nova)', street: 'Avenida dos Ipês (fictícia)', number: '850', district: 'Jardim', whatsapp: '11955554444', accepting: true },
+    ]) {
+      const { rows } = await client.query<{ id: string }>(
+        `INSERT INTO units (school_id, name, slug, address, whatsapp, phone, opening_hours, accepting_enrollments)
+         VALUES ($1, $2, $3, $4, $5, $5, 'Segunda a sexta, 7h às 18h', $6) RETURNING id`,
+        [schoolId, unit.name, unit.slug, { street: unit.street, number: unit.number, district: unit.district, city: 'São Paulo', state: 'SP' }, unit.whatsapp, unit.accepting],
+      );
+      units[unit.slug] = rows[0].id;
+    }
+
     // Segunda escola, para demonstrar o isolamento entre clientes.
     const other = await client.query<{ id: string }>(
       `INSERT INTO schools (name, slug, status) VALUES ('Colégio Beta (Demo)', 'colegio-beta', 'active') RETURNING id`,
     );
+    await client.query(`INSERT INTO units (school_id, name, slug) VALUES ($1, 'Unidade Única', 'unica')`, [other.rows[0].id]);
     await client.query(
       `INSERT INTO users (school_id, name, email, role, password_hash)
        VALUES ($1, 'Admin Beta', 'admin@beta.demo', 'school_admin', $2)`,
@@ -107,9 +131,9 @@ async function seed() {
     for (const year of [2026, 2027]) {
       for (const [index, item] of CLASSES.entries()) {
         const { rows } = await client.query<{ id: string }>(
-          `INSERT INTO classes (school_id, school_year_id, name, grade, shift, capacity)
-           VALUES ($1, $2, $3, $4, $5, 25) RETURNING id`,
-          [schoolId, years[year], item.name, item.grade, index < 3 ? 'morning' : 'afternoon'],
+          `INSERT INTO classes (school_id, school_year_id, name, grade, shift, capacity, unit_id)
+           VALUES ($1, $2, $3, $4, $5, 25, $6) RETURNING id`,
+          [schoolId, years[year], item.name, item.grade, index < 3 ? 'morning' : 'afternoon', units.centro],
         );
         classIds[year][item.name] = rows[0].id;
       }
@@ -161,10 +185,10 @@ async function seed() {
 
     // Campanha de renovação em andamento, com respostas em diferentes etapas.
     const campaign = await client.query<{ id: string }>(
-      `INSERT INTO renewal_campaigns (school_id, school_year_id, title, starts_on, ends_on, status, created_by)
-       VALUES ($1, $2, 'Renovação de Matrícula 2027', current_date - 10, current_date + 20, 'open', $3)
+      `INSERT INTO renewal_campaigns (school_id, school_year_id, title, starts_on, ends_on, status, created_by, unit_id)
+       VALUES ($1, $2, 'Renovação de Matrícula 2027', current_date - 10, current_date + 20, 'open', $3, $4)
        RETURNING id`,
-      [schoolId, years[2027], users.secretary],
+      [schoolId, years[2027], users.secretary, units.centro],
     );
     await syncCampaignRequests(client, schoolId, campaign.rows[0].id);
 
@@ -248,7 +272,9 @@ async function seed() {
       [schoolId, pending.rows[0].guardian_id, hashToken(token), users.secretary],
     );
 
-    return { students: studentIds.length, token, pending: pending.rows[0] };
+    const leads = await seedAdmissions(client, schoolId, units.jardim, years[2027], users.secretary);
+
+    return { students: studentIds.length, token, pending: pending.rows[0], leads };
   });
 
   console.log(`
@@ -260,10 +286,103 @@ ${STAFF.map((user) => `  ${user.role.padEnd(13)} ${user.email}`).join('\n')}
 Outra escola para testar isolamento (escola: colegio-beta)
   school_admin  admin@beta.demo
 
+Site público da escola
+  ${env.PUBLIC_APP_URL}/escola/alfa-reis
+  ${result.leads} interessados de exemplo na captação da Unidade Jardim
+
 Portal do responsável
   ${env.PUBLIC_APP_URL}/r/${result.token}
   Aluno: ${result.pending.full_name} — data de nascimento: ${result.pending.birth_date}
 `);
+}
+
+const LEAD_SAMPLES: { student: string; guardian: string; grade: string; status: string; source: string; daysAgo: number }[] = [
+  { student: 'Miguel Fictício Prado', guardian: 'Renata Prado', grade: 'Infantil 4', status: 'new', source: 'site', daysAgo: 0 },
+  { student: 'Laura Fictícia Nunes', guardian: 'Carlos Nunes', grade: '1º Ano', status: 'new', source: 'site', daysAgo: 1 },
+  { student: 'Enzo Fictício Moraes', guardian: 'Aline Moraes', grade: 'Infantil 5', status: 'new', source: 'instagram', daysAgo: 1 },
+  { student: 'Sofia Fictícia Teles', guardian: 'Patrícia Teles', grade: 'Infantil 4', status: 'contacted', source: 'whatsapp', daysAgo: 3 },
+  { student: 'Davi Fictício Rocha', guardian: 'Rodrigo Rocha', grade: '2º ao 5º Ano', status: 'contacted', source: 'referral', daysAgo: 4 },
+  { student: 'Helena Fictícia Brito', guardian: 'Fernanda Brito', grade: 'Infantil 5', status: 'visit_scheduled', source: 'site', daysAgo: 2 },
+  { student: 'Arthur Fictício Lins', guardian: 'Juliana Lins', grade: '1º Ano', status: 'visit_scheduled', source: 'site', daysAgo: 5 },
+  { student: 'Valentina Fictícia Reis', guardian: 'Marcelo Reis', grade: 'Infantil 4', status: 'visit_scheduled', source: 'referral', daysAgo: 6 },
+  { student: 'Theo Fictício Campos', guardian: 'Camila Campos', grade: '1º Ano', status: 'visited', source: 'site', daysAgo: 9 },
+  { student: 'Alice Fictícia Duarte', guardian: 'André Duarte', grade: 'Infantil 5', status: 'visited', source: 'instagram', daysAgo: 12 },
+  { student: 'Gabriel Fictício Melo', guardian: 'Tatiane Melo', grade: 'Infantil 4', status: 'enrolled', source: 'site', daysAgo: 20 },
+  { student: 'Manuela Fictícia Paz', guardian: 'Paulo Paz', grade: '1º Ano', status: 'enrolled', source: 'referral', daysAgo: 26 },
+  { student: 'Pedro Fictício Vidal', guardian: 'Mariana Vidal', grade: '2º ao 5º Ano', status: 'lost', source: 'site', daysAgo: 15 },
+];
+
+/** Captação da nova unidade: horários de visita, período de matrícula e interessados em várias etapas. */
+async function seedAdmissions(client: PoolClient, schoolId: string, unitId: string, yearId: string, secretaryId: string) {
+  await client.query(
+    `INSERT INTO school_sites (school_id, published, content, updated_by) VALUES ($1, true, $2, $3)`,
+    [schoolId, DEMO_SITE_CONTENT, secretaryId],
+  );
+
+  for (const [name, grade] of [['Infantil 4 J', 'Infantil 4'], ['Infantil 5 J', 'Infantil 5'], ['1º Ano J', '1º Ano']]) {
+    await client.query(
+      `INSERT INTO classes (school_id, school_year_id, unit_id, name, grade, shift, capacity) VALUES ($1, $2, $3, $4, $5, 'morning', 20)`,
+      [schoolId, yearId, unitId, name, grade],
+    );
+  }
+
+  await client.query(
+    `INSERT INTO renewal_campaigns (school_id, school_year_id, unit_id, kind, title, starts_on, ends_on, status, created_by)
+     VALUES ($1, $2, $3, 'admission', 'Matrícula 2027 · Unidade Jardim', current_date - 30, current_date + 90, 'open', $4)`,
+    [schoolId, yearId, unitId, secretaryId],
+  );
+
+  // Visitas em dias úteis das próximas 3 semanas, às 9h e às 14h30 (horário de Brasília).
+  await client.query(
+    `INSERT INTO visit_slots (school_id, unit_id, starts_at, capacity, created_by)
+     SELECT $1, $2, (d::date + t::time) AT TIME ZONE 'America/Sao_Paulo', 3, $3
+       FROM generate_series(current_date + 1, current_date + 21, interval '1 day') AS d,
+            unnest(ARRAY['09:00', '14:30']) AS t
+      WHERE extract(isodow FROM d) < 6`,
+    [schoolId, unitId, secretaryId],
+  );
+  const { rows: slots } = await client.query<{ id: string }>(
+    'SELECT id FROM visit_slots WHERE unit_id = $1 ORDER BY starts_at LIMIT 6',
+    [unitId],
+  );
+
+  const secretary = { type: 'user' as const, id: secretaryId };
+  for (const [index, sample] of LEAD_SAMPLES.entries()) {
+    const lead = await createLead(
+      client,
+      schoolId,
+      {
+        unit_id: unitId,
+        guardian_name: `${sample.guardian} (fictícia)`,
+        guardian_phone: `1196${String(1_000_000 + index * 7919).padStart(7, '0')}`,
+        student_name: sample.student,
+        student_birth_date: `${2027 - 4 - (index % 3)}-0${1 + (index % 9)}-1${index % 9}`,
+        desired_grade: sample.grade,
+        desired_year: 2027,
+        interest: sample.status === 'new' && index % 2 ? 'enroll' : 'visit',
+        how_heard: sample.source === 'referral' ? 'Indicação de outra família' : undefined,
+        source: sample.source as (typeof LEAD_SOURCES)[number],
+      },
+      sample.source === 'site' ? { type: 'public', id: null } : secretary,
+    );
+
+    if (sample.status === 'visit_scheduled') {
+      await bookVisit(client, schoolId, lead.id, slots[index % slots.length].id, { type: 'public', id: null });
+    } else if (sample.status !== 'new') {
+      await changeLeadStatus(client, schoolId, lead.id, sample.status as LeadStatus, secretary, sample.status === 'lost' ? 'Escolheu escola mais perto do trabalho' : null);
+    }
+
+    await client.query(
+      `UPDATE admission_leads SET created_at = now() - make_interval(days => $2) WHERE id = $1`,
+      [lead.id, sample.daysAgo],
+    );
+    await client.query(
+      `UPDATE admission_lead_events SET created_at = now() - make_interval(days => $2) WHERE lead_id = $1 AND type = 'created'`,
+      [lead.id, sample.daysAgo],
+    );
+  }
+
+  return LEAD_SAMPLES.length;
 }
 
 seed()

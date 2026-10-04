@@ -23,7 +23,7 @@ dashboardRouter.get('/', requirePermission('dashboard:read'), async (request, re
       [schoolId],
     ),
     pool.query(
-      `SELECT rc.id, rc.title, rc.status, rc.ends_on::text AS ends_on,
+      `SELECT rc.id, rc.title, rc.kind, rc.status, rc.ends_on::text AS ends_on,
               count(r.id)::int AS total,
               count(r.id) FILTER (WHERE r.status <> 'pending')::int AS responded,
               count(r.id) FILTER (WHERE r.status = 'approved')::int AS approved

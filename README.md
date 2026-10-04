@@ -1,6 +1,15 @@
 # Alfa Gestão Escolar
 
-Plataforma de gestão escolar multi-escola. O primeiro módulo resolve a dor mais urgente de escolas que operam em papel e WhatsApp: **a renovação de matrícula**.
+Plataforma de gestão escolar multi-escola e multiunidade, para escolas que operam em papel e WhatsApp e querem passar a captar, matricular e renovar alunos pelo celular.
+
+**Captação e matrícula de novos alunos (nova unidade)**
+
+- Site da escola editável pela própria equipe: rotina, turmas, uniforme com fotos e dúvidas frequentes.
+- Pré-matrícula no site com agendamento de visita e protocolo.
+- Fila de captação: conversa pelo WhatsApp, visita, e matrícula online com um clique.
+- Funil no painel: quantos contatos viram visita e matrícula, e de onde vêm as famílias.
+
+**Renovação de matrícula (alunos atuais)**
 
 - A Secretaria faz um cadastro mínimo (ou cola uma planilha) e envia um link pelo WhatsApp.
 - O responsável confere e completa os dados pelo celular, sem instalar aplicativo nem criar senha.
@@ -34,6 +43,10 @@ web/            interface (React + Vite): área da escola e portal do responsáv
 - Node.js 20+ e npm 10+
 - Docker (para o PostgreSQL) ou PostgreSQL 16 local
 
+## Publicação
+
+O `Dockerfile` gera um container único (site, sistema e API). O passo a passo para o piloto está em [`docs/publicacao.md`](docs/publicacao.md).
+
 ## Rodando a demonstração
 
 ```bash
@@ -55,7 +68,7 @@ O seed imprime os acessos. Escola `alfa-reis`, senha `AlfaDemo2026`:
 | Direção | direcao@alfareis.demo |
 | Administração | admin@alfareis.demo |
 
-Ele também imprime um link do portal do responsável e a data de nascimento para entrar.
+Ele também imprime o endereço do site da escola (`/escola/alfa-reis`), um link do portal do responsável e a data de nascimento para entrar.
 
 ## Qualidade
 
@@ -85,12 +98,18 @@ A CI (`.github/workflows/ci.yml`) roda lint, typecheck, testes e build da API e 
 | `GET, PATCH /api/renewal-requests`, `POST …/:id/approve, reject, request-changes` | `renewals:read` / `renewals:review` |
 | `GET /api/dashboard`, `GET /api/dashboard/renewals/:id` | `dashboard:read` |
 | `GET /api/audit-logs` | `audit:read` |
+| `GET, POST, PATCH /api/units` | `school:read` / `units:manage` |
+| `GET, PUT /api/site`, `POST, DELETE /api/site/assets` | `site:manage` |
+| `GET, POST /api/admission-leads`, `POST …/:id/status, notes, visits, convert` | `admissions:read` / `admissions:manage` |
+| `GET, POST, DELETE /api/visit-slots` | `admissions:read` / `admissions:manage` |
+| `GET /api/dashboard/admissions` | `dashboard:read` |
+| `GET /api/public/schools/:slug`, `GET /api/public/assets/:id`, `POST /api/public/schools/:slug/leads` | público |
 | `POST /api/portal/session`, `GET /api/portal/me`, `GET, POST /api/portal/renewals/:id` | link do responsável |
 
 ## Próximos passos
 
-1. Aprovar ADR-002 e decidir o escopo do `platform_admin` (painel da plataforma para cadastrar escolas).
-2. Validar a demonstração com a Secretaria e a Direção da Alfa Reis e medir os indicadores da proposta de valor.
+1. Aprovar ADR-002 e ADR-003 e decidir o escopo do `platform_admin` (painel da plataforma para cadastrar escolas).
+2. Receber textos, preços e fotos reais e publicar o piloto da nova unidade (`docs/publicacao.md`).
 3. Adicionar Row-Level Security no PostgreSQL como segunda camada de isolamento.
 4. Gerar comprovante e contrato aceitos (PDF) e permitir upload seguro de documentos.
 5. Seguir para os módulos acadêmico e financeiro conforme a ordem de fases.

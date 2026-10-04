@@ -12,6 +12,8 @@ const envSchema = z.object({
   PORTAL_LINK_TTL_DAYS: z.coerce.number().int().positive().default(15),
   PUBLIC_APP_URL: z.string().url().default('http://localhost:5173'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  // Em produção, a API também entrega a interface já compilada (web/dist).
+  WEB_DIST_DIR: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

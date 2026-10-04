@@ -11,6 +11,11 @@ import { RenewalReview } from './pages/RenewalReview';
 import { Renewals } from './pages/Renewals';
 import { StudentDetailPage, Students } from './pages/Students';
 import { Portal } from './portal/Portal';
+import { Admissions, LeadDetail } from './pages/Admissions';
+import { SiteEditor } from './pages/SiteEditor';
+import { Units } from './pages/Units';
+import { Visits } from './pages/Visits';
+import { SchoolSite } from './site/SchoolSite';
 
 function RequireStaff({ children }: { children: ReactNode }) {
   const { me, token, loading } = useAuth();
@@ -33,6 +38,8 @@ export function App() {
       <Routes>
         {/* Portal do responsável: independente do login da equipe. */}
         <Route path="/r/:token" element={<Portal />} />
+        {/* Site público da escola, com a pré-matrícula. */}
+        <Route path="/escola/:slug" element={<SchoolSite />} />
 
         <Route
           path="/*"
@@ -55,6 +62,11 @@ export function App() {
                   <Route path="alunos/:id" element={<Guard permission="students:read"><StudentDetailPage /></Guard>} />
                   <Route path="importar" element={<Guard permission="students:manage"><Import /></Guard>} />
                   <Route path="turmas" element={<Guard permission="academic:read"><Classes /></Guard>} />
+                  <Route path="captacao" element={<Guard permission="admissions:read"><Admissions /></Guard>} />
+                  <Route path="captacao/:id" element={<Guard permission="admissions:read"><LeadDetail /></Guard>} />
+                  <Route path="visitas" element={<Guard permission="admissions:read"><Visits /></Guard>} />
+                  <Route path="site" element={<Guard permission="site:manage"><SiteEditor /></Guard>} />
+                  <Route path="unidades" element={<Guard permission="school:read"><Units /></Guard>} />
                 </Route>
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>

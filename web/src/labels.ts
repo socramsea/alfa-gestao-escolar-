@@ -48,9 +48,12 @@ export function formatDate(value: string | null | undefined) {
   return `${day}/${month}/${year}`;
 }
 
+/** Horários sempre no fuso da escola, independentemente do aparelho de quem acessa. */
+export const SCHOOL_TIME_ZONE = 'America/Sao_Paulo';
+
 export function formatDateTime(value: string | null | undefined) {
   if (!value) return '—';
-  return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: SCHOOL_TIME_ZONE });
 }
 
 export function formatPhone(value: string | null | undefined) {
