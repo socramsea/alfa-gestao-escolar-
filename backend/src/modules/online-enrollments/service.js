@@ -1,5 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { z } from 'zod';
+import { guardianFor, guardianLockKeys, validCpf } from '../people/identity.js';
+
+export { validCpf };
 
 export const onlineEnrollmentTables = ['enrollment_form_settings','online_enrollments','online_enrollment_links',
   'online_enrollment_link_revocations','online_enrollment_access_attempts','online_enrollment_submissions',
@@ -25,12 +28,6 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => {
 const phone = line(30).refine(v => /^[+\d().\s-]+$/.test(v) && (v.match(/\d/g) || []).length >= 10);
 const email = z.string().trim().email().max(150).transform(v => v.toLowerCase());
 
-export function validCpf(value) {
-  const d = value.replace(/\D/g, '');
-  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
-  const digit = n => { let sum = 0; for (let i = 0; i < n; i++) sum += Number(d[i]) * (n + 1 - i); const r = (sum * 10) % 11; return r === 10 ? 0 : r; };
-  return digit(9) === Number(d[9]) && digit(10) === Number(d[10]);
-}
 const cpf = z.string().trim().refine(validCpf).transform(v => v.replace(/\D/g, ''));
 
 const guardianSchema = z.object({ full_name: line(150), relationship: line(80), phone, email: optional(email),
@@ -78,10 +75,6 @@ export const resources = {
 };
 
 const addressFields = ['zip_code','street','number','complement','district','city','state'];
-// Telefone comparável: só dígitos, sem o código do país.
-const phoneKey = v => { const d = v.replace(/\D/g, ''); return d.length > 11 && d.startsWith('55') ? d.slice(2) : d; };
-// Nome comparável: sem acentos, maiúsculas ou espaços repetidos.
-const nameKey = v => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 export const hash = data => createHash('sha256').update(JSON.stringify(data)).digest('hex');
 export const hashToken = token => createHash('sha256').update(token).digest('hex');
@@ -154,23 +147,6 @@ const finders = {
   reviews: async (client, user, id) => (await client.query(`SELECT id,application_id,submission_id,decision,note,student_id,
     enrollment_id,created_at FROM public.online_enrollment_reviews WHERE school_id=$1 AND id=$2`, [user.school_id, id])).rows[0]
 };
-
-// Irmãos: reaproveita o responsável já cadastrado na escola. Mesmo CPF é a mesma pessoa; sem CPF divergente,
-// mesmo nome e telefone também. Outro nome no mesmo telefone (a avó, por exemplo) é outra pessoa.
-async function guardianFor(client, user, g) {
-  if (g.cpf) {
-    const { rows:[same] } = await client.query('SELECT id FROM public.guardians WHERE school_id=$1 AND cpf=$2', [user.school_id, g.cpf]);
-    if (same) return same.id;
-  }
-  const { rows } = await client.query(`SELECT id,full_name,phone FROM public.guardians
-    WHERE school_id=$1 AND right(regexp_replace(phone,'[^0-9]','','g'),8)=$2 AND ($3::text IS NULL OR cpf IS NULL)
-    ORDER BY created_at,id`, [user.school_id, phoneKey(g.phone).slice(-8), g.cpf]);
-  const same = rows.find(r => phoneKey(r.phone) === phoneKey(g.phone) && nameKey(r.full_name) === nameKey(g.full_name));
-  if (same) return same.id;
-  const { rows:[created] } = await client.query(`INSERT INTO public.guardians(school_id,full_name,phone,email,cpf)
-    VALUES($1,$2,$3,$4,$5) RETURNING id`, [user.school_id, g.full_name, g.phone, g.email, g.cpf ?? null]);
-  return created.id;
-}
 
 const inserts = {
   async settings(client, user, data) {
@@ -245,14 +221,12 @@ const inserts = {
       [user.school_id, child.full_name, submission.child_birth_date, child.social_name ?? null, child.cpf ?? null,
         child.health_notes ?? null, ...addressFields.map(k => address[k] ?? null)]);
       studentId = student.id;
-      // Trava por telefone e CPF, em ordem fixa: aprovações simultâneas de irmãos não duplicam o responsável.
-      const keys = ficha.guardians.flatMap(g => [`guardian-phone:${user.school_id}:${phoneKey(g.phone)}`,
-        ...(g.cpf ? [`guardian-cpf:${user.school_id}:${g.cpf}`] : [])]);
-      for (const key of [...new Set(keys)].sort()) await lock(client, key);
+      // Irmãos: o responsável já cadastrado é reaproveitado (people/identity.js), sob trava por telefone e CPF.
+      for (const key of guardianLockKeys(user.school_id, ficha.guardians)) await lock(client, key);
       // Se a ficha repetir a mesma pessoa, o vínculo é um só e soma os papéis.
       const links = new Map();
       for (const g of ficha.guardians) {
-        const id = await guardianFor(client, user, g), seen = links.get(id);
+        const { id } = await guardianFor(client, user, g), seen = links.get(id);
         links.set(id, seen ? { ...seen, is_legal: seen.is_legal || g.is_legal, is_financial: seen.is_financial || g.is_financial } : g);
       }
       for (const [guardianId, g] of links) {

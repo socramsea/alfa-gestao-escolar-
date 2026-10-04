@@ -545,3 +545,13 @@ th {
 .site-notice { background: #fdf3d7; color: #7a4b00; border-radius: 12px; padding: .75rem 1rem; margin: 0 !important; }
 .terms-box { max-height: 240px; overflow-y: auto; border: 1px solid var(--s-line); border-radius: 12px; padding: 1rem; background: var(--s-bg); white-space: pre-line; }
 .terms-box h2 { font-size: 1rem; }
+
+/* Importação de planilha */
+.drop-zone { border: 2px dashed #94a3b8; border-radius: 14px; padding: 24px 16px; display: grid; justify-items: center; gap: 10px; text-align: center; background: #f8fafc; margin-top: 16px; }
+.drop-zone.dragging { border-color: #2563eb; background: #eff6ff; }
+.drop-zone label.secondary-button { cursor: pointer; }
+.drop-zone:focus-within label.secondary-button { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.drop-hint { color: #475569; font-size: .92rem; margin: 0; }
+.paste-box { margin-top: 14px; }
+.paste-box summary { cursor: pointer; font-weight: 600; }
+.paste-box textarea { width: 100%; margin: 10px 0; font: inherit; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; }
