@@ -35,7 +35,8 @@ test('escola define regras e convida; familia completa a ficha no celular; secre
 
   await page.getByRole('button',{name:'Nova ficha',exact:true}).click();
   await page.getByLabel('Nome da criança',{exact:true}).fill(child);
-  await page.getByLabel('Nascimento',{exact:true}).fill('2015-03-10');
+  // A escola digita o nascimento errado; a família não entra até a secretaria corrigir.
+  await page.getByLabel('Nascimento',{exact:true}).fill('2015-03-01');
   await page.getByLabel('Responsável',{exact:true}).fill('Responsável Online Fictícia');
   await page.getByLabel('WhatsApp com DDD',{exact:true}).fill('(11) 98765-4321');
   await page.getByRole('button',{name:'Criar ficha',exact:true}).click();
@@ -48,9 +49,14 @@ test('escola define regras e convida; familia completa a ficha no celular; secre
   const phone=await browser.newContext({viewport:{width:390,height:844}});
   const familyPage=await phone.newPage();familyPage.on('pageerror',e=>errors.push(e.message));
   await familyPage.goto(url);
-  await familyPage.getByLabel('Data de nascimento da criança').fill('2015-03-11');
+  await familyPage.getByLabel('Data de nascimento da criança').fill('2015-03-10');
   await familyPage.getByRole('button',{name:'Entrar',exact:true}).click();
   await expect(familyPage.getByRole('alert')).toContainText('Não conseguimos confirmar');
+  await page.getByText('Corrigir data de nascimento',{exact:true}).click();
+  await page.getByLabel('Data correta',{exact:true}).fill('2015-03-10');
+  await page.getByRole('button',{name:'Salvar data correta',exact:true}).click();
+  await expect(page.getByText(/Data de nascimento corrigida/)).toBeVisible();
+  await expect(page.getByText(/Nascimento 10\/03\/2015 \(corrigido em/)).toBeVisible();
   await familyPage.getByLabel('Data de nascimento da criança').fill('2015-03-10');
   await familyPage.getByRole('button',{name:'Entrar',exact:true}).click();
   await expect(familyPage.getByRole('heading',{name:'Ficha de matrícula'})).toBeVisible();

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const onlineEnrollmentTables = ['enrollment_form_settings','online_enrollments','online_enrollment_links',
   'online_enrollment_link_revocations','online_enrollment_access_attempts','online_enrollment_submissions',
-  'online_enrollment_reviews','online_enrollment_events'];
+  'online_enrollment_reviews','online_enrollment_events','online_enrollment_birth_date_corrections'];
 // Campos que cada escola pode tornar obrigatórios; nome, nascimento, um responsável e o aceite são sempre exigidos.
 export const optionalRequirements = ['child_cpf','child_health','guardian_cpf','guardian_email','address','second_guardian'];
 export const applicationStates = ['convidada','enviada','correcao','aprovada','recusada'];
@@ -43,7 +43,9 @@ const addressSchema = z.object({ zip_code: optional(line(9).refine(v => /^\d{5}-
 export const submissionSchema = z.object({
   child: z.object({ full_name: line(150), social_name: optional(line(150)), cpf: optional(cpf),
     health_notes: optional(multiline(2000)) }).strict(),
-  guardians: z.array(guardianSchema).min(1).max(2),
+  // Um CPF identifica uma pessoa: dois responsáveis da mesma ficha não podem repeti-lo.
+  guardians: z.array(guardianSchema).min(1).max(2)
+    .refine(gs => { const cpfs = gs.map(g => g.cpf).filter(Boolean); return new Set(cpfs).size === cpfs.length; }),
   address: addressSchema.default({}),
   accept_terms: z.literal(true)
 }).strict();
@@ -69,10 +71,17 @@ export const resources = {
     z.object({ child_name: line(150), child_birth_date: date, guardian_name: line(150), guardian_phone: phone }).strict()
   ]),
   links: z.object({ application_id: z.string().uuid() }).strict(),
+  'birth-date-corrections': z.object({ application_id: z.string().uuid(), child_birth_date: date }).strict(),
   reviews: z.object({ submission_id: z.string().uuid(), decision: z.enum(['aprovada','correcao','recusada']),
     note: optional(multiline(1000)), class_group_id: z.string().uuid().optional(), level_id: z.string().uuid().optional() })
     .strict().refine(v => v.decision === 'aprovada' ? v.class_group_id && v.level_id : v.note)
 };
+
+const addressFields = ['zip_code','street','number','complement','district','city','state'];
+// Telefone comparável: só dígitos, sem o código do país.
+const phoneKey = v => { const d = v.replace(/\D/g, ''); return d.length > 11 && d.startsWith('55') ? d.slice(2) : d; };
+// Nome comparável: sem acentos, maiúsculas ou espaços repetidos.
+const nameKey = v => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 export const hash = data => createHash('sha256').update(JSON.stringify(data)).digest('hex');
 export const hashToken = token => createHash('sha256').update(token).digest('hex');
@@ -85,7 +94,10 @@ const stateExpression = `CASE
   WHEN EXISTS (SELECT 1 FROM public.online_enrollment_submissions sb WHERE sb.school_id=a.school_id AND sb.application_id=a.id
     AND NOT EXISTS (SELECT 1 FROM public.online_enrollment_reviews rv WHERE rv.school_id=sb.school_id AND rv.submission_id=sb.id)) THEN 'enviada'
   ELSE 'correcao' END`;
-const projection = `a.id,a.school_id,a.lead_id,a.child_name,a.child_birth_date::text AS child_birth_date,a.guardian_name,
+// Data vigente do convite: a última correção da escola, senão a informada no convite (migration 010).
+const birthDate = `COALESCE((SELECT c.child_birth_date FROM public.online_enrollment_birth_date_corrections c
+  WHERE c.school_id=a.school_id AND c.application_id=a.id ORDER BY c.created_at DESC,c.id DESC LIMIT 1),a.child_birth_date)`;
+const projection = `a.id,a.school_id,a.lead_id,a.child_name,${birthDate}::text AS child_birth_date,a.guardian_name,
   a.guardian_phone,a.created_at,${stateExpression} AS state,
   (SELECT max(sb.created_at) FROM public.online_enrollment_submissions sb WHERE sb.school_id=a.school_id AND sb.application_id=a.id) AS submitted_at`;
 
@@ -124,7 +136,10 @@ export async function applicationDetail(client, user, id) {
       EXISTS (SELECT 1 FROM public.online_enrollment_link_revocations r WHERE r.school_id=l.school_id AND r.link_id=l.id) AS revoked,
       (SELECT count(*)::int FROM public.online_enrollment_access_attempts t WHERE t.school_id=l.school_id AND t.link_id=l.id AND t.success) AS accesses
     FROM public.online_enrollment_links l WHERE l.school_id=$1 AND l.application_id=$2 ORDER BY l.created_at DESC`, [user.school_id, id]);
-  return { item: { ...item, submissions, links } };
+  const { rows: birth_date_corrections } = await client.query(`SELECT c.id,c.child_birth_date::text AS child_birth_date,c.created_at
+    FROM public.online_enrollment_birth_date_corrections c WHERE c.school_id=$1 AND c.application_id=$2
+    ORDER BY c.created_at DESC,c.id DESC`, [user.school_id, id]);
+  return { item: { ...item, submissions, links, birth_date_corrections } };
 }
 
 const finders = {
@@ -133,9 +148,29 @@ const finders = {
   applications: findApplication,
   links: async (client, user, id) => (await client.query(
     'SELECT id,application_id,expires_at,created_at FROM public.online_enrollment_links WHERE school_id=$1 AND id=$2', [user.school_id, id])).rows[0],
+  'birth-date-corrections': async (client, user, id) => (await client.query(`SELECT id,application_id,
+    child_birth_date::text AS child_birth_date,created_at FROM public.online_enrollment_birth_date_corrections
+    WHERE school_id=$1 AND id=$2`, [user.school_id, id])).rows[0],
   reviews: async (client, user, id) => (await client.query(`SELECT id,application_id,submission_id,decision,note,student_id,
     enrollment_id,created_at FROM public.online_enrollment_reviews WHERE school_id=$1 AND id=$2`, [user.school_id, id])).rows[0]
 };
+
+// Irmãos: reaproveita o responsável já cadastrado na escola. Mesmo CPF é a mesma pessoa; sem CPF divergente,
+// mesmo nome e telefone também. Outro nome no mesmo telefone (a avó, por exemplo) é outra pessoa.
+async function guardianFor(client, user, g) {
+  if (g.cpf) {
+    const { rows:[same] } = await client.query('SELECT id FROM public.guardians WHERE school_id=$1 AND cpf=$2', [user.school_id, g.cpf]);
+    if (same) return same.id;
+  }
+  const { rows } = await client.query(`SELECT id,full_name,phone FROM public.guardians
+    WHERE school_id=$1 AND right(regexp_replace(phone,'[^0-9]','','g'),8)=$2 AND ($3::text IS NULL OR cpf IS NULL)
+    ORDER BY created_at,id`, [user.school_id, phoneKey(g.phone).slice(-8), g.cpf]);
+  const same = rows.find(r => phoneKey(r.phone) === phoneKey(g.phone) && nameKey(r.full_name) === nameKey(g.full_name));
+  if (same) return same.id;
+  const { rows:[created] } = await client.query(`INSERT INTO public.guardians(school_id,full_name,phone,email,cpf)
+    VALUES($1,$2,$3,$4,$5) RETURNING id`, [user.school_id, g.full_name, g.phone, g.email, g.cpf ?? null]);
+  return created.id;
+}
 
 const inserts = {
   async settings(client, user, data) {
@@ -173,8 +208,19 @@ const inserts = {
     [user.school_id, data.application_id, hashToken(extra.token), LINK_TTL_DAYS]);
     return item.id;
   },
+  // A data é o segundo fator da família: corrigir vale para o link ativo e libera quem errou por causa dela.
+  async 'birth-date-corrections'(client, user, data) {
+    if (!(await findApplication(client, user, data.application_id))) fail(404);
+    // Mesma trava do envio e da análise: a aprovação sempre lê a data vigente.
+    await lock(client, `family-application:${data.application_id}`);
+    const application = await findApplication(client, user, data.application_id);
+    if (['aprovada','recusada'].includes(application.state) || application.child_birth_date === data.child_birth_date) fail(409);
+    const { rows:[item] } = await client.query(`INSERT INTO public.online_enrollment_birth_date_corrections(school_id,application_id,
+      child_birth_date) VALUES($1,$2,$3) RETURNING id`, [user.school_id, data.application_id, data.child_birth_date]);
+    return item.id;
+  },
   async reviews(client, user, data) {
-    const { rows:[submission] } = await client.query(`SELECT sb.id,sb.application_id,sb.data,a.child_birth_date::text AS child_birth_date,a.lead_id
+    const { rows:[submission] } = await client.query(`SELECT sb.id,sb.application_id,sb.data,${birthDate}::text AS child_birth_date,a.lead_id
       FROM public.online_enrollment_submissions sb JOIN public.online_enrollments a ON a.school_id=sb.school_id AND a.id=sb.application_id
       WHERE sb.school_id=$1 AND sb.id=$2`, [user.school_id, data.submission_id]);
     if (!submission) fail(404);
@@ -191,15 +237,27 @@ const inserts = {
         JOIN public.class_group_levels gl ON gl.school_id=g.school_id AND gl.class_group_id=g.id AND gl.stage_code=g.stage_code
         WHERE g.school_id=$1 AND g.id=$2 AND gl.level_id=$3`, [user.school_id, data.class_group_id, data.level_id]);
       if (!group) fail(404);
-      const ficha = submission.data;
-      const { rows:[student] } = await client.query(`INSERT INTO public.students(school_id,full_name,birth_date)
-        VALUES($1,$2,$3) RETURNING id`, [user.school_id, ficha.child.full_name, submission.child_birth_date]);
+      const ficha = submission.data, { child } = ficha, address = ficha.address ?? {};
+      // Aluno com CPF já cadastrado na escola viola o índice único e a aprovação é recusada (409).
+      const { rows:[student] } = await client.query(`INSERT INTO public.students(school_id,full_name,birth_date,social_name,cpf,health_notes,
+        address_zip_code,address_street,address_number,address_complement,address_district,address_city,address_state)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+      [user.school_id, child.full_name, submission.child_birth_date, child.social_name ?? null, child.cpf ?? null,
+        child.health_notes ?? null, ...addressFields.map(k => address[k] ?? null)]);
       studentId = student.id;
+      // Trava por telefone e CPF, em ordem fixa: aprovações simultâneas de irmãos não duplicam o responsável.
+      const keys = ficha.guardians.flatMap(g => [`guardian-phone:${user.school_id}:${phoneKey(g.phone)}`,
+        ...(g.cpf ? [`guardian-cpf:${user.school_id}:${g.cpf}`] : [])]);
+      for (const key of [...new Set(keys)].sort()) await lock(client, key);
+      // Se a ficha repetir a mesma pessoa, o vínculo é um só e soma os papéis.
+      const links = new Map();
       for (const g of ficha.guardians) {
-        const { rows:[guardian] } = await client.query(`INSERT INTO public.guardians(school_id,full_name,phone,email)
-          VALUES($1,$2,$3,$4) RETURNING id`, [user.school_id, g.full_name, g.phone, g.email]);
-        await client.query(`INSERT INTO public.student_guardians(school_id,student_id,guardian_id,relationship,is_legal)
-          VALUES($1,$2,$3,$4,$5)`, [user.school_id, studentId, guardian.id, g.relationship, g.is_legal]);
+        const id = await guardianFor(client, user, g), seen = links.get(id);
+        links.set(id, seen ? { ...seen, is_legal: seen.is_legal || g.is_legal, is_financial: seen.is_financial || g.is_financial } : g);
+      }
+      for (const [guardianId, g] of links) {
+        await client.query(`INSERT INTO public.student_guardians(school_id,student_id,guardian_id,relationship,is_legal,is_financial)
+          VALUES($1,$2,$3,$4,$5,$6)`, [user.school_id, studentId, guardianId, g.relationship, g.is_legal, g.is_financial]);
       }
       const { rows:[enrollment] } = await client.query(`INSERT INTO public.enrollments(school_id,student_id,academic_year_id,class_group_id,level_id)
         VALUES($1,$2,$3,$4,$5) RETURNING id`, [user.school_id, studentId, group.academic_year_id, data.class_group_id, data.level_id]);
@@ -210,6 +268,8 @@ const inserts = {
     [user.school_id, submission.application_id, submission.id, data.decision, data.note, studentId, enrollmentId]);
     // A captação acompanha o desfecho da matrícula.
     if (submission.lead_id && data.decision !== 'correcao') {
+      // Mesma trava do registro de visita: o comparecimento lê o desfecho já gravado.
+      await lock(client, `lead-booking:${submission.lead_id}`);
       await client.query(`INSERT INTO public.admission_lead_updates(school_id,lead_id,status,note) VALUES($1,$2,$3,$4)`,
         [user.school_id, submission.lead_id, data.decision === 'aprovada' ? 'matriculado' : 'desistiu', data.note]);
     }

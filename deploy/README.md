@@ -151,7 +151,7 @@ do banco não inclui credenciais das roles do cluster; mantenha os segredos
 necessários à recuperação em armazenamento separado e protegido.
 
 Antes de atualizar, faça backup e valide a versão candidata em ambiente de
-teste. A nova API exige migrations 004 a 007. No banco antigo, use janela de manutenção:
+teste. A nova API exige migrations 004 a 011. No banco antigo, use janela de manutenção:
 pare a API, aplique o setup da nova versão e só então inicie a API nova.
 Rollback de migrations de segurança é bloqueado; falha de atualização exige
 investigação ou restauração previamente testada. Não execute `down -v` em banco

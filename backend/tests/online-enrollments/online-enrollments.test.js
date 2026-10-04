@@ -57,7 +57,8 @@ after(async()=>{
   try{
     const ids=fixtures.map(f=>f.school_id);
     for(const table of ['online_enrollment_events','online_enrollment_reviews','online_enrollment_submissions',
-      'online_enrollment_access_attempts','online_enrollment_link_revocations','online_enrollment_links','online_enrollments',
+      'online_enrollment_access_attempts','online_enrollment_link_revocations','online_enrollment_links',
+      'online_enrollment_birth_date_corrections','online_enrollments',
       'enrollment_form_settings','admission_events','admission_lead_updates','admission_leads','enrollment_events','enrollments',
       'student_guardians','guardians','students','structure_events','class_group_levels','class_groups','school_levels',
       'school_shifts','academic_years','school_stages','users']){
@@ -281,4 +282,95 @@ test('fronteira da familia: somente alfa_app executa e a inicializacao recusa fu
     finally{await admin.query(restore);}
   }
   await testDatabaseConnection();
+});
+
+test('convite: nascimento errado e corrigido pela escola; a familia entra com a data certa pelo mesmo link',async()=>{
+  const WRONG='2021-01-01';
+  const lead=(await add(a,'admissions/leads',{source:'whatsapp',interest:'matricula',guardian_name:'Responsável Correção',
+    guardian_phone:'(11) 94444-5555',child_name:'Criança Correção',consent:true})).item;
+  const app=(await add(a,'online-enrollments/applications',{lead_id:lead.id,child_birth_date:WRONG})).item;
+  const {token}=await add(a,'online-enrollments/links',{application_id:app.id});
+  for(let i=0;i<4;i++)assert.equal((await openFicha(token)).status,401);
+  assert.equal((await openFicha(token)).status,429);
+  assert.equal((await openFicha(token)).status,429);
+  assert.equal((await api(a,'online-enrollments/applications',{lead_id:lead.id,child_birth_date:BIRTH})).status,409);
+  for(const bad of [{application_id:app.id},{application_id:app.id,child_birth_date:'2999-01-01'},
+    {application_id:app.id,child_birth_date:'22/04/2021'},{application_id:app.id,child_birth_date:BIRTH,school_id:b.school_id}]){
+    assert.equal((await api(a,'online-enrollments/birth-date-corrections',bad)).status,400);
+  }
+  assert.equal((await api(b,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH})).status,404);
+  const key=randomUUID();
+  const fixed=await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH},key);
+  assert.equal(fixed.status,201);assert.equal((await fixed.json()).item.child_birth_date,BIRTH);
+  assert.equal((await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH},key)).status,200);
+  assert.equal((await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH})).status,409);
+  const opened=await openFicha(token);assert.equal(opened.status,200);
+  assert.equal((await opened.json()).application.child_birth_date,BIRTH);
+  assert.equal((await openFicha(token,WRONG)).status,401);
+  const detail=(await (await api(a,`online-enrollments/applications/${app.id}`)).json()).item;
+  assert.equal(detail.child_birth_date,BIRTH);assert.equal(detail.lead_id,lead.id);
+  assert.deepEqual(detail.birth_date_corrections.map(c=>c.child_birth_date),[BIRTH]);
+  assert.equal((await send(token)).status,201);
+  const sub=await latestSubmission(a,app.id);
+  const review=(await add(a,'online-enrollments/reviews',{submission_id:sub.id,decision:'aprovada',class_group_id:a.group.id,level_id:a.level.id})).item;
+  const {rows:[student]}=await admin.query('SELECT birth_date::text AS birth_date FROM students WHERE id=$1',[review.student_id]);
+  assert.equal(student.birth_date,BIRTH);
+  assert.equal((await (await api(a,`admissions/leads/${lead.id}`)).json()).item.status,'matriculado');
+  assert.equal((await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:'2021-05-05'})).status,409);
+});
+
+async function approve(f,data){
+  const {app,token}=await invite(f,{child_name:data.child.full_name});
+  assert.equal((await send(token,data)).status,201);
+  const sub=await latestSubmission(f,app.id);
+  return api(f,'online-enrollments/reviews',{submission_id:sub.id,decision:'aprovada',class_group_id:f.group.id,level_id:f.level.id});
+}
+const guardiansOf=async studentId=>(await admin.query(`SELECT sg.guardian_id,g.full_name,g.cpf,g.email,sg.relationship,sg.is_legal,sg.is_financial
+  FROM student_guardians sg JOIN guardians g ON g.id=sg.guardian_id WHERE sg.student_id=$1 ORDER BY g.full_name`,[studentId])).rows;
+
+test('aprovacao: CPF, nome social, saude, endereco e responsavel financeiro chegam ao cadastro',async()=>{
+  const data=ficha({child:{full_name:'Criança Cadastro Completo',social_name:'Cacá',cpf:'246.813.579-28',health_notes:'Alergia a lactose'},
+    guardians:[{full_name:'Mãe Cadastro',relationship:'Mãe',phone:'(11) 95555-1212',cpf:'123.456.789-09',email:'MAE@cadastro.test',is_legal:true,is_financial:false},
+      {full_name:'Pai Cadastro',relationship:'Pai',phone:'(11) 95555-3434',is_legal:false,is_financial:true}],
+    address:{zip_code:'01310-100',street:'Avenida Fictícia',number:'100',complement:'Apto 1',district:'Centro',city:'São Paulo',state:'sp'}});
+  const res=await approve(a,data);assert.equal(res.status,201);
+  const review=(await res.json()).item;
+  const {rows:[student]}=await admin.query(`SELECT full_name,social_name,cpf,health_notes,address_zip_code,address_street,address_number,
+    address_complement,address_district,address_city,address_state FROM students WHERE id=$1`,[review.student_id]);
+  assert.deepEqual(student,{full_name:'Criança Cadastro Completo',social_name:'Cacá',cpf:'24681357928',health_notes:'Alergia a lactose',
+    address_zip_code:'01310-100',address_street:'Avenida Fictícia',address_number:'100',address_complement:'Apto 1',
+    address_district:'Centro',address_city:'São Paulo',address_state:'SP'});
+  assert.deepEqual((await guardiansOf(review.student_id)).map(({guardian_id:_,...g})=>g),[
+    {full_name:'Mãe Cadastro',cpf:'12345678909',email:'mae@cadastro.test',relationship:'Mãe',is_legal:true,is_financial:false},
+    {full_name:'Pai Cadastro',cpf:null,email:null,relationship:'Pai',is_legal:false,is_financial:true}]);
+  const listed=(await (await api(a,'people/students')).json()).items.find(s=>s.id===review.student_id);
+  assert.equal(listed.cpf,'24681357928');assert.equal(listed.address_city,'São Paulo');
+  // A mesma criança (mesmo CPF) não vira um segundo aluno: a aprovação é recusada sem gravar nada.
+  const count=async()=>(await admin.query('SELECT count(*)::int AS n FROM students WHERE school_id=$1',[a.school_id])).rows[0].n;
+  const before=await count();
+  assert.equal((await approve(a,ficha({child:{full_name:'Criança Cadastro Repetida',cpf:'246.813.579-28'}}))).status,409);
+  assert.equal(await count(),before);
+});
+
+test('aprovacao: irmaos compartilham o responsavel ja cadastrado; pessoas diferentes nao se fundem',async()=>{
+  const mother={full_name:'Mãe dos Irmãos',relationship:'Mãe',phone:'(11) 96666-1010',cpf:'987.654.321-00',is_legal:true,is_financial:true};
+  const father={full_name:'Pai dos Irmãos',relationship:'Pai',phone:'(11) 96666-2020',is_legal:true,is_financial:false};
+  const {token}=await invite(a);
+  assert.equal((await send(token,ficha({guardians:[mother,{...father,cpf:mother.cpf}]}))).status,400);
+  const first=(await (await approve(a,ficha({child:{full_name:'Irmão Mais Velho'},guardians:[mother,father]}))).json()).item;
+  // Mesma mãe pelo CPF; mesmo pai por nome e telefone escritos de outro jeito e sem CPF.
+  const second=(await (await approve(a,ficha({child:{full_name:'Irmã do Meio'},guardians:[
+    {...mother,full_name:'MÃE DOS IRMÃOS',phone:'+55 11 96666-1010'},{...father,full_name:'pai  dos irmaos',phone:'11966662020',is_financial:true}]}))).json()).item;
+  const firstLinks=await guardiansOf(first.student_id),secondLinks=await guardiansOf(second.student_id);
+  assert.deepEqual(secondLinks.map(g=>g.guardian_id),firstLinks.map(g=>g.guardian_id));
+  assert.deepEqual(secondLinks.map(g=>[g.full_name,g.is_financial]),[['Mãe dos Irmãos',true],['Pai dos Irmãos',true]]);
+  // Mesmo telefone com outro nome (avó) e mesmo nome e telefone com outro CPF são pessoas diferentes.
+  const third=(await (await approve(a,ficha({child:{full_name:'Irmão Caçula'},guardians:[
+    {...father,full_name:'Avó dos Irmãos',relationship:'Avó'},{...mother,cpf:'135.792.468-28'}]}))).json()).item;
+  const known=new Set(firstLinks.map(g=>g.guardian_id));
+  const thirdLinks=await guardiansOf(third.student_id);
+  assert.equal(thirdLinks.length,2);assert.ok(thirdLinks.every(g=>!known.has(g.guardian_id)));
+  const {rows:[{n}]}=await admin.query(`SELECT count(*)::int AS n FROM guardians WHERE school_id=$1
+    AND full_name IN ('Mãe dos Irmãos','Pai dos Irmãos','Avó dos Irmãos')`,[a.school_id]);
+  assert.equal(n,4);
 });

@@ -15,7 +15,7 @@ A [arquitetura](arquitetura-sistema-escolar.md) prevê o módulo "Comunicação 
 
 Aprovadas pelo responsável em 2026-10-04: usar o `monolito-js` como base oficial e construir o site e a pré-matrícula como próxima entrega.
 
-Propostas na implementação, sujeitas a revisão pelo responsável:
+Propostas na implementação e aprovadas pelo responsável na mesclagem do [PR #1](https://github.com/socramsea/alfa-gestao-escolar-/pull/1), em 2026-10-04:
 
 1. **Pré-matrícula não cria aluno.** O interessado fica em `admission_leads`, separado de `students` e `guardians`. Só vira aluno quando a matrícula for feita (entrega seguinte ou cadastro manual atual).
 2. **Endereço público por código.** Cada escola escolhe uma vez um código (`/escola/<codigo>`), único na plataforma e imutável.
