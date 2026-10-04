@@ -1,8 +1,12 @@
 node_modules/
-dist/
 .env
 .env.*
 !.env.example
-*.log
+dist/
+build/
 coverage/
 .DS_Store
+*.log
+deploy/backups/
+frontend/test-results/
+frontend/playwright-report/

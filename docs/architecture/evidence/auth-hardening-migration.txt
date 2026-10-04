@@ -1,0 +1,4 @@
+> Migrating files:
+> - 003_restrict_auth_credentials
+### MIGRATION 003_restrict_auth_credentials (UP) ###
+PASS: migration 003 aplicada em localhost:5433/alfa_gestao; usuarios, escolas, auditoria e hashes preservados integralmente.

@@ -1,0 +1,37 @@
+ Container alfa-piloto-local-frontend-1 Stopping 
+ Container alfa-piloto-local-frontend-1 Stopped 
+ Container alfa-piloto-local-api-1 Stopping 
+ Container alfa-piloto-local-api-1 Stopped 
+PASS: backup do piloto criado, protegido e índice do arquivo verificado.
+ Container alfa-piloto-local-postgres-1 Running 
+ Container alfa-piloto-local-postgres-1 Waiting 
+ Container alfa-piloto-local-postgres-1 Healthy 
+ Container alfa-piloto-local-setup-run-1d367ab685ee Creating 
+ Container alfa-piloto-local-setup-run-1d367ab685ee Created 
+> Migrating files:
+> - 005_people_and_guardians
+### MIGRATION 005_people_and_guardians (UP) ###
+Senhas das roles configuradas sem exibicao.
+Escola e administrador já cadastrados; credenciais e dados preservados.
+PASS: migration 005 aplicada; escolas, usuários, estrutura, T1 e auditorias anteriores preservados integralmente.
+ Container alfa-piloto-local-postgres-1 Running 
+ Container alfa-piloto-local-api-1 Recreate 
+ Container alfa-piloto-local-api-1 Recreated 
+ Container alfa-piloto-local-frontend-1 Recreate 
+ Container alfa-piloto-local-frontend-1 Recreated 
+ Container alfa-piloto-local-postgres-1 Waiting 
+ Container alfa-piloto-local-postgres-1 Healthy 
+ Container alfa-piloto-local-api-1 Starting 
+ Container alfa-piloto-local-api-1 Started 
+ Container alfa-piloto-local-api-1 Waiting 
+ Container alfa-piloto-local-api-1 Healthy 
+ Container alfa-piloto-local-frontend-1 Starting 
+ Container alfa-piloto-local-frontend-1 Started 
+ Container alfa-piloto-local-frontend-1 Waiting 
+ Container alfa-piloto-local-postgres-1 Waiting 
+ Container alfa-piloto-local-api-1 Waiting 
+ Container alfa-piloto-local-frontend-1 Healthy 
+ Container alfa-piloto-local-api-1 Healthy 
+ Container alfa-piloto-local-postgres-1 Healthy 
+PILOTO PEOPLE UPGRADE PASS: http://127.0.0.1:8088
+Backup local: /home/sea/alfa-gestao-escolar/deploy/backups/piloto-antes-pessoas-20261003T002100Z.dump

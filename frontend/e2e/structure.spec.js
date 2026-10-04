@@ -1,0 +1,47 @@
+import { test, expect } from '@playwright/test';
+test('administrador configura a escola, cria turma, recarrega e encerra sessao', async ({ page }) => {
+  if (!process.env.E2E_BASE_URL || !process.env.E2E_EMAIL || !process.env.E2E_PASSWORD) throw new Error('Ambiente E2E isolado obrigatorio');
+  const tag = Date.now().toString();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.getByLabel(/e-mail/i).fill(process.env.E2E_EMAIL);
+  await page.getByLabel(/senha/i).fill(process.env.E2E_PASSWORD);
+  await page.getByRole('button', {name:/entrar/i}).click();
+  await expect(page.getByRole('heading', {name:'Estrutura escolar',exact:true})).toBeVisible();
+  async function save() {
+    await page.getByRole('button',{name:'Salvar cadastro',exact:true}).click();
+    await expect(page.getByText('Cadastro salvo na sua escola.',{exact:true})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Salvar cadastro',exact:true})).toBeVisible();
+  }
+  await page.getByLabel('Etapa oferecida').selectOption('infantil'); await save();
+  await page.getByRole('button',{name:'2. Períodos',exact:true}).click();
+  await page.getByLabel('Código',{exact:true}).fill(`Y${tag}`);
+  await page.getByLabel('Início',{exact:true}).fill('2027-02-01');
+  await page.getByLabel('Fim',{exact:true}).fill('2027-12-20'); await save();
+  await page.getByRole('button',{name:'3. Grupos e séries',exact:true}).click();
+  await page.getByLabel('Código',{exact:true}).fill(`G${tag}`);
+  await page.getByLabel('Nome',{exact:true}).fill('Grupo de teste');
+  await page.getByLabel('Etapa',{exact:true}).selectOption('infantil'); await save();
+  await page.getByRole('button',{name:'4. Turnos',exact:true}).click();
+  await page.getByLabel('Código',{exact:true}).fill(`M${tag}`);
+  await page.getByLabel('Nome',{exact:true}).fill('Manhã de teste'); await save();
+  await page.getByRole('button',{name:'5. Turmas',exact:true}).click();
+  await page.getByLabel('Código',{exact:true}).fill(`T${tag}`);
+  await page.getByLabel('Etapa',{exact:true}).selectOption('infantil');
+  await page.getByLabel('Período letivo',{exact:true}).selectOption({label:`Y${tag}`});
+  await page.getByLabel('Turno',{exact:true}).selectOption({label:'Manhã de teste'});
+  await page.getByLabel('Grupo de teste',{exact:true}).check(); await save();
+  await expect(page.getByRole('row').filter({hasText:`T${tag}`})).toHaveCount(1);
+  await page.reload();
+  await page.getByRole('button',{name:'5. Turmas',exact:true}).click();
+  await expect(page.getByRole('row').filter({hasText:`T${tag}`})).toHaveCount(1);
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  if (process.env.E2E_SCREENSHOT) await page.screenshot({path:process.env.E2E_SCREENSHOT,fullPage:true});
+  await page.getByRole('button',{name:'Sair',exact:true}).click();
+  await expect(page.getByRole('button',{name:/entrar/i})).toBeVisible();
+  await page.goto('/secretaria');
+  await expect(page.getByRole('button',{name:/entrar/i})).toBeVisible();
+  expect(errors).toEqual([]);
+});

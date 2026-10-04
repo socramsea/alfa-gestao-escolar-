@@ -1,21 +1,15 @@
 services:
   postgres:
-    image: postgres:16-alpine
-    container_name: alfa-gestao-postgres
+    image: postgres:15
+    container_name: alfa-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: alfa
-      POSTGRES_PASSWORD: alfa_dev_password
       POSTGRES_DB: alfa_gestao
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no ambiente ou .env local}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U alfa -d alfa_gestao"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
+      - pgdata:/var/lib/postgresql/data
 volumes:
-  postgres_data:
+  pgdata:

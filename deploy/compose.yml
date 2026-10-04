@@ -1,0 +1,83 @@
+name: alfa-mvp
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alfa_gestao
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD}
+    volumes:
+      - mvpdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d alfa_gestao"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [database]
+  setup:
+    image: alfa-mvp-setup:local
+    profiles: [setup]
+    build:
+      context: ../backend
+      target: setup
+    environment:
+      NODE_ENV: production
+      ADMIN_DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Obrigatorio}@postgres:5432/alfa_gestao
+      DATABASE_URL: postgresql://alfa_app:${APP_PASSWORD:?Obrigatorio}@postgres:5432/alfa_gestao
+      AUTH_DATABASE_URL: postgresql://alfa_auth:${AUTH_PASSWORD:?Obrigatorio}@postgres:5432/alfa_gestao
+      SCHOOL_NAME: ${SCHOOL_NAME:?Defina SCHOOL_NAME}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Defina ADMIN_EMAIL}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrador escolar}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [database]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  api:
+    image: alfa-mvp-api:local
+    build:
+      context: ../backend
+      target: runtime
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4000
+      DATABASE_URL: postgresql://alfa_app:${APP_PASSWORD:?Obrigatorio}@postgres:5432/alfa_gestao
+      AUTH_DATABASE_URL: postgresql://alfa_auth:${AUTH_PASSWORD:?Obrigatorio}@postgres:5432/alfa_gestao
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET}
+      JWT_EXPIRES_IN: 1h
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:?Defina PUBLIC_ORIGIN}
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [database, web]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  frontend:
+    image: alfa-mvp-frontend:local
+    build: ../frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8080}:8080"
+    depends_on:
+      api: { condition: service_healthy }
+    networks: [web]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+volumes:
+  mvpdata:
+networks:
+  database:
+    internal: true
+  web:

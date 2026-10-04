@@ -1,83 +1,31 @@
 # Alfa Gestão Escolar
 
-Plataforma de gestão escolar multi-escola, construída incrementalmente conforme a visão de negócio e arquitetura do MVP.
+Plataforma de gestão escolar para várias escolas, com os dados de cada escola isolados. A Escola Alfa Reis é o piloto, sempre com dados fictícios até a aprovação formal de produção.
 
-## Estado atual
+## Por onde começar
 
-A Fase 0 — Fundamentos está em implementação. Esta etapa prepara:
-
-- backend Node.js + TypeScript + Express;
-- PostgreSQL via Docker Compose;
-- migrations versionadas;
-- estrutura modular;
-- logger e tratamento de erros;
-- validação de ambiente;
-- base para autenticação e isolamento por escola.
-
-## Requisitos
-
-- Node.js 20+
-- npm 10+
-- Docker e Docker Compose
-
-## Executar PostgreSQL
-
-```bash
-docker compose up -d postgres
-```
-
-## Instalar dependências
-
-```bash
-npm install
-```
-
-## Configurar ambiente
-
-```bash
-cp .env.example .env
-```
-
-Revise os valores de `.env` antes de executar o backend. O arquivo `.env` não deve ser versionado.
-
-## Executar em desenvolvimento
-
-```bash
-npm run dev
-```
-
-Health check:
-
-```bash
-curl http://localhost:4000/health
-```
-
-## Migrations
-
-```bash
-npm run db:migrate
-```
+- [`docs/ROTEIRO.md`](docs/ROTEIRO.md): o que está pronto, o que falta para o MVP e as regras de trabalho. Leia antes de começar qualquer mudança.
+- [`docs/visao-negocio-e-arquitetura-do-mvp.md`](docs/visao-negocio-e-arquitetura-do-mvp.md): o produto, o fluxo que define o MVP e seus critérios de aceite.
+- [`docs/architecture/arquitetura-sistema-escolar.md`](docs/architecture/arquitetura-sistema-escolar.md): a arquitetura alvo. Cada entrega tem seu documento em `docs/architecture/entrega-N-*.md`.
+- [`docs/decisoes/`](docs/decisoes/): decisões registradas (ADRs).
 
 ## Estrutura
 
 ```text
-backend/
-├── src/
-│   ├── config/
-│   ├── database/
-│   │   └── migrations/
-│   ├── middlewares/
-│   ├── modules/
-│   ├── app.ts
-│   └── server.ts
-├── docker-compose.yml
-├── package.json
-└── tsconfig.json
+backend/    API Node.js + Express sobre PostgreSQL com RLS (migrations, módulos, testes)
+frontend/   Interface React + Vite (testes do cliente e de navegador com Playwright)
+deploy/     Pacote Docker Compose do piloto, configuração e smoke
+docs/       Roteiro, visão do produto, arquitetura, entregas e decisões
 ```
 
-## Regras essenciais
+## Executar e testar
 
-- Dados de escola devem ser associados a `school_id`.
-- O escopo autorizado deve vir do usuário autenticado, nunca de um parâmetro livre do cliente.
-- Dados reais não devem ser usados no ambiente de demonstração.
-- Consulte `docs/visao-negocio-e-arquitetura-do-mvp.md` antes de implementar novos módulos.
+- **Piloto completo com Docker:** siga [`deploy/README.md`](deploy/README.md).
+- **Desenvolvimento:**
+  - PostgreSQL local em `127.0.0.1:5433` com `docker compose up -d`, após definir `POSTGRES_PASSWORD` a partir de `.env.example`.
+  - API: configure `backend/.env` a partir de `backend/.env.example` e, em `backend/`, rode `npm run db:migrate`, `npm run db:provision`, `npm run db:seed:admin` e `npm run dev`.
+  - Interface: em `frontend/`, rode `npm run dev`.
+- **Testes do backend:**
+  - `npm run test:gate` recria um banco isolado com Docker e roda tudo.
+  - `npm test` usa o banco local e exige a API rodando.
+- **Testes do frontend:** `npm test` para o cliente e `npm run test:e2e` para o navegador.
