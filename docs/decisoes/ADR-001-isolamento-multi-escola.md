@@ -1,112 +1,77 @@
-# ADR-001: Isolamento multi-escola e autorização por perfil
+# ADR-001 — Isolamento multi-escola
 
-- **Status:** Proposta para aprovação do arquiteto
-- **Data:** 2026-09-22
-- **Escopo:** API do Alfa Gestão Escolar
-- **Relacionada:** `docs/regras-de-isolamento-multi-escola.md`
+Status: ACEITO para a fundação do MVP. Decisões de estado da escola e identidade
+aprovadas explicitamente pelo responsável pelo projeto nesta missão.
+A decisão 3 foi revisada com autorização explícita em 2026-09-24:
+ver [ADR-002](ADR-002-restricao-alfa-auth.md).
 
 ## Contexto
 
-A plataforma atende múltiplas escolas no mesmo sistema. Os dados de cada escola devem permanecer isolados, e o acesso deve respeitar o perfil do usuário autenticado.
+Filtros por school_id isolavam respostas, mas a API usava postgres, que ignora
+RLS. O login escolhia um registro por email com LIMIT 1, embora a unicidade
+original permitisse repetir email entre escolas. Não havia verificação do
+estado da escola. A migration 001 deve permanecer intacta.
 
-Os testes manuais da Fase 1C confirmaram que:
+## Decisões
 
-- a ausência de token retorna `401 Unauthorized`;
-- um perfil sem permissão retorna `403 Forbidden`;
-- usuários de escolas diferentes recebem dados separados;
-- `school_id` enviado em query string não altera o escopo do token.
+1. Escola permite autenticação/acesso somente com deleted_at IS NULL e status
+   em ('trial', 'active'). Todo outro estado é negado. A função SQL invoker
+   school_allows_access centraliza a regra para aplicação e policies.
+2. Login continua email + password, sem school_id fornecido pelo cliente.
+   O índice parcial UNIQUE em lower(email), WHERE deleted_at IS NULL, torna
+   o email globalmente único entre não deletados, **inclusive inativos**.
+   Isso segue a preferência explícita do índice e evita ambiguidade ao
+   reativar usuário. A migration falha claramente diante de duplicatas sem
+   corrigir, apagar ou escolher identidade automaticamente. Não há LIMIT 1.
+3. A proibição inicial de SECURITY DEFINER foi substituída pelo ADR-002.
+   alfa_auth passa a ter somente EXECUTE nas funções restritas de autenticação
+   e reconstrução de identidade, sem SELECT nas tabelas. O owner técnico
+   alfa_auth_owner é NOLOGIN, sem superuser/BYPASSRLS/memberships ou ownership
+   das tabelas; as funções não retornam hashes. A migration 003 revoga também
+   os grants de coluna antigos. alfa_app continua sendo o pool tenant-scoped.
+4. Validar senha, usuário e escola; obter school_id do registro autenticado;
+   emitir JWT. Nas requisições seguintes, verificar assinatura/claims,
+   reconstruir identidade e autorização no banco e verificar o vínculo.
+   JWT não determina role/estado atual. TenantContext vem dessa identidade.
+5. Operações de tenant usam alfa_app, sem superuser, BYPASSRLS, ownership ou
+   memberships. Conexão administrativa distinta fica nos comandos de
+   migrations/provisionamento/seeds, sem importação pelos módulos HTTP.
+6. Usar contexto local à transação em cliente reservado de pg.Pool. Garantir
+   commit/rollback, reset defensivo e descarte em falha de limpeza. Revalidar
+   identidade na transação antes de ler dados; me respeita id e school_id.
+7. ENABLE/FORCE RLS em users, audit_logs e schools. schools.id é o tenant;
+   sua policy também exige escola autorizada. USING e WITH CHECK protegem
+   leitura e escrita; nenhum tenant tem bypass por role funcional do usuário.
+8. Conceder apenas SELECT necessário aos endpoints existentes. DML negado;
+   testes de policies de escrita usam grants transacionais revertidos, não
+   ampliação permanente de privilégios para fazer testes passarem.
 
-## Decisão proposta
+## Consequências e limites
 
-### 1. Fonte de autoridade do tenant
+O mesmo email não pode representar usuários não deletados em duas escolas.
+Necessidade futura de participação em várias escolas exige mudança explícita
+para **identidade global + memberships**; não flexibilizar silenciosamente
+este índice nem voltar a escolher tenant por LIMIT 1.
 
-O escopo da escola será obtido exclusivamente da identidade autenticada:
+A unicidade original (school_id, email) continua existindo, inclusive para
+excluídos. Reutilização de email após exclusão pode ainda conflitar dentro da
+mesma escola; não foi implementado fluxo de recadastro nesta fundação.
 
-```js
-req.user.school_id
-```
+alfa_auth não pode mais ler hashes diretamente; esse acesso interno pertence
+somente ao owner NOLOGIN das funções. A credencial de autenticação ainda
+permite tentativas de senha e consulta de campos públicos por UUID conhecido. RLS protege consultas tenant-scoped
+contra filtros esquecidos; não protege contra total comprometimento da API,
+credenciais de autenticação ou administrador do banco. Escolas/usuários
+bloqueados deixam de passar nas validações seguintes, sem cancelamento
+retroativo de operações em andamento.
 
-O backend não deve aceitar `req.query.school_id`, `req.body.school_id`, `req.params.school_id` ou headers fornecidos pelo cliente como fonte de autoridade para escolher a escola.
+As migrations 002 e 003 não oferecem rollback automático para remover controles;
+reversão exige plano administrativo explícito. Reconstrução usa migrations
+para frente em banco limpo. Senhas são fornecidas por ambiente, nunca migration.
 
-Toda consulta ou alteração de entidade pertencente a uma escola deve aplicar o `school_id` autenticado.
+## Provas
 
-### 2. Autenticação e estado do usuário
-
-O middleware de autenticação deve validar o JWT e consultar o usuário no banco. O acesso deve ser recusado quando o usuário:
-
-- não existir;
-- estiver inativo (`active = false`);
-- estiver excluído logicamente (`deleted_at IS NOT NULL`);
-- possuir token inválido ou expirado.
-
-Falhas de autenticação devem retornar `401 Unauthorized`.
-
-### 3. Autorização por perfil
-
-A autorização deve ser explícita por rota:
-
-- `platform_admin`: abrangência global ou limitada conforme decisão final do arquiteto;
-- `school_admin`: somente dados da própria escola;
-- `teacher`: somente módulos pedagógicos autorizados;
-- `student`: somente os próprios dados e módulos autorizados.
-
-Usuário autenticado sem autorização deve receber `403 Forbidden`.
-
-### 4. Unicidade de e-mail
-
-**Proposta:** o e-mail deve ser único dentro de cada escola, por meio de uma migration com:
-
-```sql
-UNIQUE (school_id, email)
-```
-
-A migration deve verificar duplicidades existentes antes de criar a restrição. O código não deve usar `ON CONFLICT (email)` sem uma constraint compatível.
-
-## Decisões pendentes para aprovação
-
-1. `platform_admin` terá acesso global a todas as escolas ou também ficará limitado ao `school_id` do token?
-2. A unicidade de e-mail será por escola, conforme a proposta acima, ou global na plataforma?
-3. Quais endpoints e módulos serão permitidos para `teacher`?
-4. Quais endpoints e módulos serão permitidos para `student`?
-5. Quais operações exigirão auditoria obrigatória?
-
-## Consequências
-
-### Positivas
-
-- reduz o risco de vazamento entre escolas;
-- impede que o cliente escolha outro tenant por parâmetro;
-- torna a autorização revisável por perfil;
-- fornece critérios objetivos para testes e Pull Requests;
-- facilita o onboarding de novos colaboradores.
-
-### Impactos
-
-- toda nova rota multi-escola deverá aplicar o filtro de tenant;
-- será necessário criar migration para a regra de unicidade aprovada;
-- será necessário automatizar os testes de autenticação, autorização e isolamento;
-- a regra de `platform_admin` precisa ser aprovada antes de implementar acesso global.
-
-## Critérios de aceite da Fase 1C
-
-- [ ] Ausência de token retorna `401`.
-- [ ] Token inválido ou expirado retorna `401`.
-- [ ] Usuário inativo ou excluído não acessa recursos protegidos.
-- [ ] Perfil sem permissão retorna `403`.
-- [ ] `school_id` é obtido exclusivamente do usuário autenticado.
-- [ ] Usuário da Escola A não acessa dados da Escola B.
-- [ ] Usuário da Escola B não acessa dados da Escola A.
-- [ ] `school_id` enviado por query, body ou parâmetro não altera o escopo.
-- [ ] Consultas respeitam exclusão lógica.
-- [ ] A unicidade de e-mail é implementada por migration após aprovação.
-- [ ] Existem testes automatizados para todos os cenários acima.
-
-## Plano de implementação após aprovação
-
-1. Confirmar as decisões pendentes com o arquiteto.
-2. Inspecionar e tratar duplicidades de e-mail existentes.
-3. Criar a migration de unicidade aprovada.
-4. Criar testes automatizados de autenticação, autorização e isolamento.
-5. Revisar todas as rotas multi-escola.
-6. Executar a suíte de testes e validar os critérios de aceite.
-7. Atualizar este ADR de **Proposta** para **Aceito** e registrar a referência do sprint ou Pull Request.
+Ver [TenantContext](../architecture/tenant-context.md),
+[relatório atual](../architecture/auth-hardening-report.md) e evidências da suíte completa
+no Docker oficial e em reconstrução limpa. O gate exige todos os critérios;
+resultados parciais não são aprovação.

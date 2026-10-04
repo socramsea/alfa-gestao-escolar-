@@ -1,0 +1,464 @@
+
+> alfa-gestao-backend@1.0.0 test:gate
+> node scripts/gate.js
+
+GATE: PostgreSQL Docker limpo em porta isolada; dados ficticios; armazenamento tmpfs.
+PASS: migration rejeita duplicatas case-insensitive sem modificar dados.
+Senhas das roles configuradas sem exibicao.
+Escola de desenvolvimento criada: 22636b89-fa70-4132-8742-dc84db0c4858
+Administrador criado: admin@alfareis.test
+Escola B criada: 61b7d509-696b-4dce-b216-9e0fbbfe0d8f
+Administrador B criado: admin@escola-b.test
+> Migrating files:
+> - 005_people_and_guardians
+### MIGRATION 005_people_and_guardians (UP) ###
+No migrations to run!
+PASS: upgrade 004 -> 005 preserva estrutura existente; migrations repetidas sem alteracao.
+PASS: migration 003 rejeita formato incompativel e preserva hashes/identidades bcrypt existentes.
+Escola de desenvolvimento já existente: 22636b89-fa70-4132-8742-dc84db0c4858
+Administrador já existente: admin@alfareis.test
+Escola B já existente: 61b7d509-696b-4dce-b216-9e0fbbfe0d8f
+Administrador B já existente: admin@escola-b.test
+PASS: ambos os seeds idempotentes, incluindo UUIDs, hashes e timestamps.
+Banco validado: roles restritas, RLS/FORCE ativos e alfa_auth sem leitura direta de tabelas.
+API iniciada na porta 37341
+TAP version 13
+# Subtest: pessoas: datas civis, contatos opcionais e listagens isoladas
+ok 1 - pessoas: datas civis, contatos opcionais e listagens isoladas
+  ---
+  duration_ms: 1825.352705
+  type: 'test'
+  ...
+# Subtest: pessoas: vinculo persiste sem criar conta de responsavel e aceita relacao nao legal
+ok 2 - pessoas: vinculo persiste sem criar conta de responsavel e aceita relacao nao legal
+  ---
+  duration_ms: 144.169843
+  type: 'test'
+  ...
+# Subtest: pessoas: IDOR e referencias inexistentes ou de outra escola retornam 404 sem escrita
+ok 3 - pessoas: IDOR e referencias inexistentes ou de outra escola retornam 404 sem escrita
+  ---
+  duration_ms: 79.86645
+  type: 'test'
+  ...
+# Subtest: pessoas: tenant injetado, campos de portal/financeiro e parametros extras recusados
+ok 4 - pessoas: tenant injetado, campos de portal/financeiro e parametros extras recusados
+  ---
+  duration_ms: 125.007327
+  type: 'test'
+  ...
+# Subtest: pessoas: datas invalidas/futuras, nomes vazios, contatos invalidos e boolean string recusados
+ok 5 - pessoas: datas invalidas/futuras, nomes vazios, contatos invalidos e boolean string recusados
+  ---
+  duration_ms: 96.244726
+  type: 'test'
+  ...
+# Subtest: pessoas: homonimos nao sao mesclados por nome, nascimento ou email
+ok 6 - pessoas: homonimos nao sao mesclados por nome, nascimento ou email
+  ---
+  duration_ms: 42.195818
+  type: 'test'
+  ...
+# Subtest: pessoas: reenvio concorrente cria somente um registro/evento e conflito devolve 409
+ok 7 - pessoas: reenvio concorrente cria somente um registro/evento e conflito devolve 409
+  ---
+  duration_ms: 199.065106
+  type: 'test'
+  ...
+# Subtest: pessoas: vinculo concorrente unico com reenvio e chaves diferentes
+ok 8 - pessoas: vinculo concorrente unico com reenvio e chaves diferentes
+  ---
+  duration_ms: 110.417583
+  type: 'test'
+  ...
+# Subtest: pessoas: mesma chave em tenants diferentes nao compartilha resultado
+ok 9 - pessoas: mesma chave em tenants diferentes nao compartilha resultado
+  ---
+  duration_ms: 27.932591
+  type: 'test'
+  ...
+# Subtest: pessoas: sem token e perfis nao administrativos negados; role atual prevalece
+ok 10 - pessoas: sem token e perfis nao administrativos negados; role atual prevalece
+  ---
+  duration_ms: 82.875406
+  type: 'test'
+  ...
+# Subtest: pessoas: escola suspensa bloqueia leitura e escrita
+ok 11 - pessoas: escola suspensa bloqueia leitura e escrita
+  ---
+  duration_ms: 17.25188
+  type: 'test'
+  ...
+# Subtest: pessoas: RLS bilateral sem WHERE, ausencia de contexto e auth sem leitura inclusive COPY
+ok 12 - pessoas: RLS bilateral sem WHERE, ausencia de contexto e auth sem leitura inclusive COPY
+  ---
+  duration_ms: 304.44836
+  type: 'test'
+  ...
+# Subtest: pessoas: banco bloqueia escrita cruzada e FKs aluno/responsavel/ator de outro tenant
+ok 13 - pessoas: banco bloqueia escrita cruzada e FKs aluno/responsavel/ator de outro tenant
+  ---
+  duration_ms: 155.190861
+  type: 'test'
+  ...
+# Subtest: pessoas: auditoria invalida reverte criacao sem deixar registro ou evento
+ok 14 - pessoas: auditoria invalida reverte criacao sem deixar registro ou evento
+  ---
+  duration_ms: 20.55918
+  type: 'test'
+  ...
+# Banco validado: roles restritas, RLS/FORCE ativos e alfa_auth sem leitura direta de tabelas.
+# Subtest: pessoas: runtime sem UPDATE/DELETE; startup exige RLS FORCE em todas as novas tabelas
+ok 15 - pessoas: runtime sem UPDATE/DELETE; startup exige RLS FORCE em todas as novas tabelas
+  ---
+  duration_ms: 137.81579
+  type: 'test'
+  ...
+# Subtest: pessoas: paginacao estavel sem omissao, repeticao ou mistura de tenant
+ok 16 - pessoas: paginacao estavel sem omissao, repeticao ou mistura de tenant
+  ---
+  duration_ms: 39.903506
+  type: 'test'
+  ...
+# Banco validado: roles restritas, RLS/FORCE ativos e alfa_auth sem leitura direta de tabelas.
+# Subtest: runtime usa alfa_app/alfa_auth restritos e RLS FORCE nas tres tabelas
+ok 17 - runtime usa alfa_app/alfa_auth restritos e RLS FORCE nas tres tabelas
+  ---
+  duration_ms: 2510.050393
+  type: 'test'
+  ...
+# Subtest: menor privilegio: auth sem DML/auditoria, runtime sem hashes e sem DML
+ok 18 - menor privilegio: auth sem DML/auditoria, runtime sem hashes e sem DML
+  ---
+  duration_ms: 362.441648
+  type: 'test'
+  ...
+# Subtest: sem token, adulterado, expirado e algoritmo indevido retornam 401
+ok 19 - sem token, adulterado, expirado e algoritmo indevido retornam 401
+  ---
+  duration_ms: 21.642289
+  type: 'test'
+  ...
+# Subtest: A e B isolados em users, schools e me; nenhuma resposta contem hash
+ok 20 - A e B isolados em users, schools e me; nenhuma resposta contem hash
+  ---
+  duration_ms: 93.27026
+  type: 'test'
+  ...
+# Subtest: school_id de body/query/header/params nao muda tenant; login rejeita seletor
+ok 21 - school_id de body/query/header/params nao muda tenant; login rejeita seletor
+  ---
+  duration_ms: 47.311441
+  type: 'test'
+  ...
+# Subtest: UUID de outro tenant bloqueado pelo banco; JWT assinado com vinculo falso rejeitado
+ok 22 - UUID de outro tenant bloqueado pelo banco; JWT assinado com vinculo falso rejeitado
+  ---
+  duration_ms: 56.329407
+  type: 'test'
+  ...
+# Subtest: role atual no banco prevalece sobre JWT antigo: 403
+ok 23 - role atual no banco prevalece sobre JWT antigo: 403
+  ---
+  duration_ms: 18.394443
+  type: 'test'
+  ...
+# Subtest: usuario active=false bloqueia login e token emitido anteriormente
+ok 24 - usuario active=false bloqueia login e token emitido anteriormente
+  ---
+  duration_ms: 488.690807
+  type: 'test'
+  ...
+# Subtest: usuario deleted_at=now() bloqueia login e token emitido anteriormente
+ok 25 - usuario deleted_at=now() bloqueia login e token emitido anteriormente
+  ---
+  duration_ms: 422.187216
+  type: 'test'
+  ...
+# Subtest: escola status=trial: regra central aplicada no login, middleware e RLS
+ok 26 - escola status=trial: regra central aplicada no login, middleware e RLS
+  ---
+  duration_ms: 430.935737
+  type: 'test'
+  ...
+# Subtest: escola status=active: regra central aplicada no login, middleware e RLS
+ok 27 - escola status=active: regra central aplicada no login, middleware e RLS
+  ---
+  duration_ms: 417.454722
+  type: 'test'
+  ...
+# Subtest: escola status=inactive: regra central aplicada no login, middleware e RLS
+ok 28 - escola status=inactive: regra central aplicada no login, middleware e RLS
+  ---
+  duration_ms: 527.019094
+  type: 'test'
+  ...
+# Subtest: escola status=suspended: regra central aplicada no login, middleware e RLS
+ok 29 - escola status=suspended: regra central aplicada no login, middleware e RLS
+  ---
+  duration_ms: 406.583082
+  type: 'test'
+  ...
+# Subtest: escola status=unknown: regra central aplicada no login, middleware e RLS
+ok 30 - escola status=unknown: regra central aplicada no login, middleware e RLS
+  ---
+  duration_ms: 404.608254
+  type: 'test'
+  ...
+# Subtest: escola deletada bloqueia login e acesso com token anterior
+ok 31 - escola deletada bloqueia login e acesso com token anterior
+  ---
+  duration_ms: 418.702686
+  type: 'test'
+  ...
+# Subtest: RLS filtra users/audit_logs/schools mesmo sem WHERE em ambos os tenants
+ok 32 - RLS filtra users/audit_logs/schools mesmo sem WHERE em ambos os tenants
+  ---
+  duration_ms: 22.087338
+  type: 'test'
+  ...
+# Subtest: RLS WITH CHECK bloqueia INSERT/UPDATE cross-tenant em users, mesmo com grant temporario
+ok 33 - RLS WITH CHECK bloqueia INSERT/UPDATE cross-tenant em users, mesmo com grant temporario
+  ---
+  duration_ms: 29.020423
+  type: 'test'
+  ...
+# Subtest: RLS WITH CHECK bloqueia INSERT/UPDATE cross-tenant em audit_logs, mesmo com grant temporario
+ok 34 - RLS WITH CHECK bloqueia INSERT/UPDATE cross-tenant em audit_logs, mesmo com grant temporario
+  ---
+  duration_ms: 24.452305
+  type: 'test'
+  ...
+# Subtest: RLS WITH CHECK bloqueia INSERT/UPDATE cross-tenant em schools, mesmo com grant temporario
+ok 35 - RLS WITH CHECK bloqueia INSERT/UPDATE cross-tenant em schools, mesmo com grant temporario
+  ---
+  duration_ms: 18.906277
+  type: 'test'
+  ...
+# Subtest: pool max=1 reutiliza mesmo backend sem contexto apos commit/rollback e sob concorrencia
+ok 36 - pool max=1 reutiliza mesmo backend sem contexto apos commit/rollback e sob concorrencia
+  ---
+  duration_ms: 185.35293
+  type: 'test'
+  ...
+# Subtest: requisicoes concorrentes alternadas nao vazam tenant
+ok 37 - requisicoes concorrentes alternadas nao vazam tenant
+  ---
+  duration_ms: 241.487067
+  type: 'test'
+  ...
+# Subtest: email global case-insensitive unico inclusive inativos, liberado apenas por exclusao logica
+ok 38 - email global case-insensitive unico inclusive inativos, liberado apenas por exclusao logica
+  ---
+  duration_ms: 403.151468
+  type: 'test'
+  ...
+# Falha interna na API
+# Subtest: HTTP: sem X-Powered-By, CORS limitado, Zod e JSON invalido
+ok 39 - HTTP: sem X-Powered-By, CORS limitado, Zod e JSON invalido
+  ---
+  duration_ms: 22.864972
+  type: 'test'
+  ...
+# Subtest: falha de conexao durante transacao descarta cliente; proxima conexao fica sem tenant
+ok 40 - falha de conexao durante transacao descarta cliente; proxima conexao fica sem tenant
+  ---
+  duration_ms: 28.922428
+  type: 'test'
+  ...
+# Subtest: limpeza adicional remove contexto de sessao acidental antes de devolver cliente ao pool
+ok 41 - limpeza adicional remove contexto de sessao acidental antes de devolver cliente ao pool
+  ---
+  duration_ms: 7.447667
+  type: 'test'
+  ...
+# Subtest: alfa_auth nao extrai tabelas/colunas nem por COPY
+ok 42 - alfa_auth nao extrai tabelas/colunas nem por COPY
+  ---
+  duration_ms: 146.191952
+  type: 'test'
+  ...
+# Subtest: funcoes autenticam bcrypt existente e retornam somente identidade sem hashes
+ok 43 - funcoes autenticam bcrypt existente e retornam somente identidade sem hashes
+  ---
+  duration_ms: 787.098924
+  type: 'test'
+  ...
+# Subtest: senha incorreta, identidade ausente, NULL e limites invalidos falham fechados
+ok 44 - senha incorreta, identidade ausente, NULL e limites invalidos falham fechados
+  ---
+  duration_ms: 2060.364665
+  type: 'test'
+  ...
+# Subtest: bcrypt 2a ASCII com 72 bytes preservado; nao aceita truncamento
+ok 45 - bcrypt 2a ASCII com 72 bytes preservado; nao aceita truncamento
+  ---
+  duration_ms: 2136.228777
+  type: 'test'
+  ...
+# Subtest: bcrypt 2a Unicode com 72 bytes preservado; nao aceita truncamento
+ok 46 - bcrypt 2a Unicode com 72 bytes preservado; nao aceita truncamento
+  ---
+  duration_ms: 2136.463556
+  type: 'test'
+  ...
+# Subtest: hash invalido nao gera vazamento nem autentica identidade
+ok 47 - hash invalido nao gera vazamento nem autentica identidade
+  ---
+  duration_ms: 392.267427
+  type: 'test'
+  ...
+# Subtest: owner NOLOGIN restrito; runtime nao assume owner nem altera funcoes
+ok 48 - owner NOLOGIN restrito; runtime nao assume owner nem altera funcoes
+  ---
+  duration_ms: 116.312037
+  type: 'test'
+  ...
+# Subtest: EXECUTE negado a alfa_app e PUBLIC, inclusive com USAGE temporario no schema
+ok 49 - EXECUTE negado a alfa_app e PUBLIC, inclusive com USAGE temporario no schema
+  ---
+  duration_ms: 48.234744
+  type: 'test'
+  ...
+# Subtest: search_path hostil e tabelas temporarias nao substituem objetos das funcoes
+ok 50 - search_path hostil e tabelas temporarias nao substituem objetos das funcoes
+  ---
+  duration_ms: 1653.801495
+  type: 'test'
+  ...
+# Subtest: startup rejeita grants de coluna, EXECUTE publico, owner inseguro e search_path alterado
+ok 51 - startup rejeita grants de coluna, EXECUTE publico, owner inseguro e search_path alterado
+  ---
+  duration_ms: 62.544252
+  type: 'test'
+  ...
+# Subtest: Alfa e Escola B possuem tenants diferentes
+ok 52 - Alfa e Escola B possuem tenants diferentes
+  ---
+  duration_ms: 889.970461
+  type: 'test'
+  ...
+# Subtest: tenant Alfa só recebe usuários da própria escola
+ok 53 - tenant Alfa só recebe usuários da própria escola
+  ---
+  duration_ms: 406.360131
+  type: 'test'
+  ...
+# Subtest: tenant B só recebe usuários da própria escola
+ok 54 - tenant B só recebe usuários da própria escola
+  ---
+  duration_ms: 444.029159
+  type: 'test'
+  ...
+# Subtest: rota protegida rejeita requisição sem token
+ok 55 - rota protegida rejeita requisição sem token
+  ---
+  duration_ms: 9.20292
+  type: 'test'
+  ...
+# Subtest: rota protegida rejeita token adulterado
+ok 56 - rota protegida rejeita token adulterado
+  ---
+  duration_ms: 500.457731
+  type: 'test'
+  ...
+# Subtest: estrutura persiste turma e datas civis; consulta isolada
+ok 57 - estrutura persiste turma e datas civis; consulta isolada
+  ---
+  duration_ms: 1872.74618
+  type: 'test'
+  ...
+# Subtest: três etapas coexistem e turma aceita grupos da mesma etapa
+ok 58 - três etapas coexistem e turma aceita grupos da mesma etapa
+  ---
+  duration_ms: 184.876569
+  type: 'test'
+  ...
+# Subtest: referencias de outra escola e etapa nao oferecida recusadas
+ok 59 - referencias de outra escola e etapa nao oferecida recusadas
+  ---
+  duration_ms: 57.155361
+  type: 'test'
+  ...
+# Subtest: tenant no payload, datas invalidas, duplicidade de niveis e query invalidas recusados
+ok 60 - tenant no payload, datas invalidas, duplicidade de niveis e query invalidas recusados
+  ---
+  duration_ms: 45.068376
+  type: 'test'
+  ...
+# Subtest: reenvio concorrente produz um registro e um evento; payload divergente gera conflito
+ok 61 - reenvio concorrente produz um registro e um evento; payload divergente gera conflito
+  ---
+  duration_ms: 86.798859
+  type: 'test'
+  ...
+# Subtest: chaves diferentes nao contornam unicidade concorrente
+ok 62 - chaves diferentes nao contornam unicidade concorrente
+  ---
+  duration_ms: 21.822274
+  type: 'test'
+  ...
+# Subtest: perfis nao administrativos negados e token antigo respeita role atual
+ok 63 - perfis nao administrativos negados e token antigo respeita role atual
+  ---
+  duration_ms: 17.292193
+  type: 'test'
+  ...
+# Subtest: sem token e escola suspensa nao acessam estrutura
+ok 64 - sem token e escola suspensa nao acessam estrutura
+  ---
+  duration_ms: 12.564495
+  type: 'test'
+  ...
+# Subtest: RLS sem contexto nega leitura; com contexto filtra mesmo sem WHERE; auth sem grants
+ok 65 - RLS sem contexto nega leitura; com contexto filtra mesmo sem WHERE; auth sem grants
+  ---
+  duration_ms: 225.546328
+  type: 'test'
+  ...
+# Subtest: RLS de escrita e FK composta bloqueiam tenant e referencias cruzadas diretamente
+ok 66 - RLS de escrita e FK composta bloqueiam tenant e referencias cruzadas diretamente
+  ---
+  duration_ms: 23.576284
+  type: 'test'
+  ...
+# Subtest: falha de auditoria reverte cadastro e nao deixa evento
+ok 67 - falha de auditoria reverte cadastro e nao deixa evento
+  ---
+  duration_ms: 19.497075
+  type: 'test'
+  ...
+# Banco validado: roles restritas, RLS/FORCE ativos e alfa_auth sem leitura direta de tabelas.
+# Subtest: runtime nao altera/apaga eventos ou registros; startup exige RLS nas novas tabelas
+ok 68 - runtime nao altera/apaga eventos ou registros; startup exige RLS nas novas tabelas
+  ---
+  duration_ms: 146.862592
+  type: 'test'
+  ...
+# Subtest: paginacao retorna todos os registros sem repeticao nem mistura de escolas
+ok 69 - paginacao retorna todos os registros sem repeticao nem mistura de escolas
+  ---
+  duration_ms: 38.241847
+  type: 'test'
+  ...
+1..69
+# tests 69
+# suites 0
+# pass 69
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26896.981369
+  ➜  Local:   http://127.0.0.1:40241/
+
+Running 2 tests using 1 worker
+
+(node:3167498) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 ../frontend/e2e/people.spec.js:2:1 › administrador cadastra aluno, responsavel e vinculo; persiste apos reload e nova sessao (6.5s)
+  ✓  2 ../frontend/e2e/structure.spec.js:2:1 › administrador configura a escola, cria turma, recarrega e encerra sessao (5.0s)
+
+  2 passed (14.5s)
+BROWSER LOCAL PASS: frontend build + API + PostgreSQL isolado; nao certifica runtime Docker de deploy.
+GATE CLEAN REBUILD PASS: migrations, preflight, seeds, API, suite completa e sintaxe.

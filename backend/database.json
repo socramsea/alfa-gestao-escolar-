@@ -1,0 +1,7 @@
+{
+  "development": {
+    "driver": "pg",
+    "connectionStringVariable": "ADMIN_DATABASE_URL",
+    "dir": "migrations"
+  }
+}
