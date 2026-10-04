@@ -5,6 +5,7 @@ Plataforma de gestão escolar para várias escolas, com os dados de cada escola 
 ## Por onde começar
 
 - [`docs/ROTEIRO.md`](docs/ROTEIRO.md): o que está pronto, o que falta para o MVP e as regras de trabalho. Leia antes de começar qualquer mudança.
+- [`docs/MVP-1.md`](docs/MVP-1.md): o MVP 1, matrícula sem papel da unidade nova, com os critérios de aceite e o passo a passo de demonstração no piloto.
 - [`docs/visao-negocio-e-arquitetura-do-mvp.md`](docs/visao-negocio-e-arquitetura-do-mvp.md): o produto, o fluxo que define o MVP e seus critérios de aceite.
 - [`docs/architecture/arquitetura-sistema-escolar.md`](docs/architecture/arquitetura-sistema-escolar.md): a arquitetura alvo. Cada entrega tem seu documento em `docs/architecture/entrega-N-*.md`.
 - [`docs/decisoes/`](docs/decisoes/): decisões registradas (ADRs).

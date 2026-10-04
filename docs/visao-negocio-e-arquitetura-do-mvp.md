@@ -231,6 +231,8 @@ Pagamentos reais e dados completos de cartão não fazem parte do MVP inicial.
 
 ## 8. Fluxo funcional mínimo do MVP
 
+> Este fluxo e estes critérios definem o **MVP 2** (renovação). O MVP 1, matrícula sem papel da unidade nova, está em [`docs/MVP-1.md`](MVP-1.md) ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md)).
+
 O fluxo de negócio que deve ser demonstrado é:
 
 ```text
@@ -318,6 +320,8 @@ O sistema só poderá receber dados reais quando todos os itens abaixo forem ate
 A aprovação de produção deve ser registrada formalmente e não pode ser inferida apenas porque o fluxo do Demo funciona.
 
 ## 12. Critérios de aceite do MVP
+
+> Este fluxo e estes critérios definem o **MVP 2** (renovação). O MVP 1, matrícula sem papel da unidade nova, está em [`docs/MVP-1.md`](MVP-1.md) ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md)).
 
 - [ ] O projeto possui estrutura modular documentada.
 - [ ] O ambiente de desenvolvimento pode ser reproduzido.
