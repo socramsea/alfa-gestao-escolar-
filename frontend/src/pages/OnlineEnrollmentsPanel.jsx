@@ -177,6 +177,7 @@ function ApplicationDetail({ id, onChange, onClose }) {
   const [refs, setRefs] = useState({ groups: [], levels: [], years: [] });
   const [token, setToken] = useState(null);
   const [review, setReview] = useState({ class_group_id: '', level_id: '', note: '' });
+  const [birth, setBirth] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [revision, setRevision] = useState(0);
@@ -200,18 +201,27 @@ function ApplicationDetail({ id, onChange, onClose }) {
   const yearCode = g => refs.years.find(y => y.id === g.academic_year_id)?.code || '';
   const levels = refs.levels.filter(l => group?.level_ids.includes(l.id));
   const activeLink = item.links.find(l => !l.revoked && new Date(l.expires_at) > new Date());
+  const open = !['aprovada','recusada'].includes(item.state);
+  const corrected = item.birth_date_corrections?.[0];
   return <section className="panel lead-detail" aria-label={`Ficha de ${item.child_name}`}>
     <div className="panel-heading"><div><h2>{item.child_name}</h2>
-      <p>Nascimento {civil(item.child_birth_date)} · {item.guardian_name} · {item.guardian_phone}</p></div>
+      <p>Nascimento {civil(item.child_birth_date)}{corrected ? ` (corrigido em ${when(corrected.created_at)})` : ''} · {item.guardian_name} · {item.guardian_phone}</p></div>
       <span className={STATE_CLASS[item.state]}>{STATES[item.state]}</span></div>
     {message && <p className="success-message" role="status">{message}</p>}
     {error && <div className="error-message" role="alert">{error}</div>}
     {token && <LinkNotice guardianName={item.guardian_name} guardianPhone={item.guardian_phone} childName={item.child_name} token={token} onClose={() => setToken(null)} />}
     <div className="structure-tabs">
-      {!['aprovada','recusada'].includes(item.state) && <button className="primary-button" disabled={busy} onClick={() => act('links', { application_id: item.id }, r => setToken(r.token))}>{activeLink ? 'Gerar novo link' : 'Gerar link para a família'}</button>}
+      {open && <button className="primary-button" disabled={busy} onClick={() => act('links', { application_id: item.id }, r => setToken(r.token))}>{activeLink ? 'Gerar novo link' : 'Gerar link para a família'}</button>}
       <button className="secondary-button" onClick={onClose}>Fechar</button>
     </div>
     <p>{activeLink ? `Link ativo até ${when(activeLink.expires_at)} · ${activeLink.accesses} acesso(s) da família.` : 'Nenhum link ativo.'}</p>
+    {open && <details><summary>Corrigir data de nascimento</summary>
+      <form className="structure-form" onSubmit={e => { e.preventDefault(); act('birth-date-corrections', { application_id: item.id, child_birth_date: birth },
+        () => { setBirth(''); setMessage('Data de nascimento corrigida. A família entra pelo mesmo link com a nova data.'); }); }}><fieldset disabled={busy}>
+        <label>Data correta<input type="date" required value={birth} onChange={e => setBirth(e.target.value)} /></label>
+        <p className="wide">A família confirma esta data para abrir o link. Corrigir libera quem ficou bloqueado por causa da data errada.</p>
+        <div className="structure-tabs wide"><button className="primary-button" disabled={busy || !birth || birth === item.child_birth_date}>Salvar data correta</button></div>
+      </fieldset></form></details>}
 
     {latest ? <><h3>Ficha enviada em {when(latest.created_at)}</h3><FichaView data={latest.data} /></> : <p>A família ainda não enviou a ficha.</p>}
 

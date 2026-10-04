@@ -74,6 +74,16 @@ Mesmo ambiente da Entrega 5: PostgreSQL 16 isolado, sem Docker, banco recriado a
 
 `deploy/smoke.py` foi atualizado com as contagens das novas tabelas e dos alunos, responsáveis e matrículas criados pela aprovação. O nginx limita por IP os acessos da família.
 
+## Correções após revisão (2026-10-04)
+
+Uma revisão da lógica encontrou falhas que foram reproduzidas pela API e corrigidas com testes:
+
+1. **A situação do interessado não regride.** Registrar o comparecimento de uma visita pendente gravava "visitou" mesmo depois da matrícula aprovada ou da desistência, e essa passava a ser a situação. Agora, com o atendimento encerrado, o comparecimento só entra no histórico da visita. Reabrir continua possível por uma anotação da equipe.
+2. **A secretaria corrige a data de nascimento do convite.** Com a data errada, a família não entrava, e o convite não podia ser refeito para o mesmo interessado. A correção fica em `online_enrollment_birth_date_corrections` (migration `010`), por `POST /api/online-enrollments/birth-date-corrections`, e na tela pelo item **Corrigir data de nascimento** da ficha.
+   - A última correção vale para o acesso da família, para o envio e para o aluno criado na aprovação.
+   - Corrigir zera as tentativas erradas do link ativo, então a família entra pelo mesmo link.
+   - Não há correção depois de aprovada ou recusada, e o histórico é preservado.
+
 ## Pendente no ambiente com Docker
 
 1. `GATE_BROWSER=1 npm run test:gate`;

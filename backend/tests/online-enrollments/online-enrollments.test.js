@@ -57,7 +57,8 @@ after(async()=>{
   try{
     const ids=fixtures.map(f=>f.school_id);
     for(const table of ['online_enrollment_events','online_enrollment_reviews','online_enrollment_submissions',
-      'online_enrollment_access_attempts','online_enrollment_link_revocations','online_enrollment_links','online_enrollments',
+      'online_enrollment_access_attempts','online_enrollment_link_revocations','online_enrollment_links',
+      'online_enrollment_birth_date_corrections','online_enrollments',
       'enrollment_form_settings','admission_events','admission_lead_updates','admission_leads','enrollment_events','enrollments',
       'student_guardians','guardians','students','structure_events','class_group_levels','class_groups','school_levels',
       'school_shifts','academic_years','school_stages','users']){
@@ -281,4 +282,39 @@ test('fronteira da familia: somente alfa_app executa e a inicializacao recusa fu
     finally{await admin.query(restore);}
   }
   await testDatabaseConnection();
+});
+
+test('convite: nascimento errado e corrigido pela escola; a familia entra com a data certa pelo mesmo link',async()=>{
+  const WRONG='2021-01-01';
+  const lead=(await add(a,'admissions/leads',{source:'whatsapp',interest:'matricula',guardian_name:'Responsável Correção',
+    guardian_phone:'(11) 94444-5555',child_name:'Criança Correção',consent:true})).item;
+  const app=(await add(a,'online-enrollments/applications',{lead_id:lead.id,child_birth_date:WRONG})).item;
+  const {token}=await add(a,'online-enrollments/links',{application_id:app.id});
+  for(let i=0;i<4;i++)assert.equal((await openFicha(token)).status,401);
+  assert.equal((await openFicha(token)).status,429);
+  assert.equal((await openFicha(token)).status,429);
+  assert.equal((await api(a,'online-enrollments/applications',{lead_id:lead.id,child_birth_date:BIRTH})).status,409);
+  for(const bad of [{application_id:app.id},{application_id:app.id,child_birth_date:'2999-01-01'},
+    {application_id:app.id,child_birth_date:'22/04/2021'},{application_id:app.id,child_birth_date:BIRTH,school_id:b.school_id}]){
+    assert.equal((await api(a,'online-enrollments/birth-date-corrections',bad)).status,400);
+  }
+  assert.equal((await api(b,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH})).status,404);
+  const key=randomUUID();
+  const fixed=await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH},key);
+  assert.equal(fixed.status,201);assert.equal((await fixed.json()).item.child_birth_date,BIRTH);
+  assert.equal((await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH},key)).status,200);
+  assert.equal((await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:BIRTH})).status,409);
+  const opened=await openFicha(token);assert.equal(opened.status,200);
+  assert.equal((await opened.json()).application.child_birth_date,BIRTH);
+  assert.equal((await openFicha(token,WRONG)).status,401);
+  const detail=(await (await api(a,`online-enrollments/applications/${app.id}`)).json()).item;
+  assert.equal(detail.child_birth_date,BIRTH);assert.equal(detail.lead_id,lead.id);
+  assert.deepEqual(detail.birth_date_corrections.map(c=>c.child_birth_date),[BIRTH]);
+  assert.equal((await send(token)).status,201);
+  const sub=await latestSubmission(a,app.id);
+  const review=(await add(a,'online-enrollments/reviews',{submission_id:sub.id,decision:'aprovada',class_group_id:a.group.id,level_id:a.level.id})).item;
+  const {rows:[student]}=await admin.query('SELECT birth_date::text AS birth_date FROM students WHERE id=$1',[review.student_id]);
+  assert.equal(student.birth_date,BIRTH);
+  assert.equal((await (await api(a,`admissions/leads/${lead.id}`)).json()).item.status,'matriculado');
+  assert.equal((await api(a,'online-enrollments/birth-date-corrections',{application_id:app.id,child_birth_date:'2021-05-05'})).status,409);
 });
