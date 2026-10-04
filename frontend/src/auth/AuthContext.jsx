@@ -4,6 +4,7 @@ import { peopleRequest } from './people-api.js';
 import { enrollmentRequest } from './enrollment-api.js';
 import { staffRequest } from './staff-api.js';
 import { admissionsRequest } from './admissions-api.js';
+import { onlineEnrollmentRequest } from './online-enrollment-api.js';
 
 const AuthContext = createContext(null);
 const KEY = 'alfa.session';
@@ -125,12 +126,24 @@ export function AuthProvider({ children }) {
       throw err;
     }
   }, []);
+  const online = useCallback(async (path, options) => {
+    const activeToken = token.current;
+    if (!activeToken) throw new Error('Entre novamente para continuar.');
+    try {
+      const result = await onlineEnrollmentRequest(activeToken, path, options);
+      if (activeToken !== token.current) throw new Error('Sessão alterada. Entre novamente.');
+      return result;
+    } catch (err) {
+      if (err.status === 401 && activeToken === token.current) logout();
+      throw err;
+    }
+  }, []);
   // Prévia de fotos exige credencial: busca como blob e devolve URL local.
   const admissionsImage = useCallback(async id => {
     const response = await fetch(`/api/admissions/site/images/${id}`, { headers: { Authorization: `Bearer ${token.current}` } });
     if (!response.ok) throw new Error('Foto indisponível.');
     return URL.createObjectURL(await response.blob());
   }, []);
-  return <AuthContext.Provider value={{ user, loading, error, login, logout, retry: validate, structure, people, enroll, staff, admissions, admissionsImage }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, error, login, logout, retry: validate, structure, people, enroll, staff, admissions, admissionsImage, online }}>{children}</AuthContext.Provider>;
 }
 export const useAuth = () => useContext(AuthContext);

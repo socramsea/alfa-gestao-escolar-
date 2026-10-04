@@ -534,3 +534,14 @@ th {
 .field-group { display: grid; gap: .3rem; min-width: 0; }
 .field-group label { font-weight: 700; font-size: .92rem; }
 .structure-form div > select, .structure-form div > label + select { margin-top: 8px; }
+
+/* Entrega 6 — matrícula online -------------------------------------------- */
+.link-notice { border: 1px solid #86efac; background: #f0fdf4; border-radius: 12px; padding: 16px; margin: 16px 0; }
+.message-preview { white-space: pre-wrap; word-break: break-word; background: #ffffff; border-radius: 8px; padding: 12px; margin: 10px 0; }
+.ficha { margin-bottom: 12px; }
+.family-page { padding-block: 2rem 4rem; max-width: 720px; }
+.family-page h1 { font-size: 1.6rem; }
+.family-form fieldset { border-top: 1px solid var(--s-line); padding-top: 1rem; }
+.site-notice { background: #fdf3d7; color: #7a4b00; border-radius: 12px; padding: .75rem 1rem; margin: 0 !important; }
+.terms-box { max-height: 240px; overflow-y: auto; border: 1px solid var(--s-line); border-radius: 12px; padding: 1rem; background: var(--s-bg); white-space: pre-line; }
+.terms-box h2 { font-size: 1rem; }

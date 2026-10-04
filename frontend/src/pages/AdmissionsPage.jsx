@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
+import OnlineEnrollmentsPanel, { LinkNotice } from './OnlineEnrollmentsPanel.jsx';
 
 const TZ = 'America/Sao_Paulo';
 const civil = date => date?.slice(0, 10).split('-').reverse().join('/') || '';
@@ -18,7 +19,7 @@ const SOURCES = [['whatsapp','WhatsApp'],['indicacao','Indicação'],['instagram
 const SOURCE_LABEL = Object.fromEntries([['site','Site'], ...SOURCES]);
 const INTEREST = { visita: 'Quer visitar', matricula: 'Quer matricular', informacoes: 'Informações' };
 const OUTCOME = { compareceu: 'Compareceu', nao_compareceu: 'Não compareceu', cancelada: 'Cancelada' };
-const tabs = [['leads','Interessados'],['slots','Visitas'],['site','Site da escola']];
+const tabs = [['leads','Interessados'],['slots','Visitas'],['online','Matrícula online'],['site','Site da escola']];
 
 function waLink(phone, text) {
   const digits = (phone || '').replace(/\D/g, '');
@@ -59,7 +60,7 @@ export default function AdmissionsPage() {
       <nav className="structure-tabs" aria-label="Áreas da captação">{tabs.map(([key, label]) =>
         <button key={key} className={tab === key ? 'primary-button' : 'secondary-button'} aria-current={tab === key ? 'page' : undefined}
           onClick={() => setTab(key)}>{label}</button>)}</nav>
-      {tab === 'leads' ? <Leads /> : tab === 'slots' ? <Slots /> : <SiteEditor />}
+      {tab === 'leads' ? <Leads /> : tab === 'slots' ? <Slots /> : tab === 'online' ? <OnlineEnrollmentsPanel /> : <SiteEditor />}
     </div>
   </main>;
 }
@@ -150,6 +151,32 @@ function ManualLead({ onCreated }) {
   </section>;
 }
 
+function StartOnline({ lead, onDone }) {
+  const { online } = useAuth();
+  const [birth, setBirth] = useState(lead.child_birth_date || '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [token, setToken] = useState(null);
+  const keys = useRef({});
+  async function start(e) {
+    e.preventDefault(); setBusy(true); setError('');
+    const post = (path, body) => { const sig = `${path}:${JSON.stringify(body)}`; keys.current[sig] ??= crypto.randomUUID();
+      return online(path, { method: 'POST', body: JSON.stringify(body), headers: { 'Idempotency-Key': keys.current[sig] } }); };
+    try {
+      const app = await post('applications', { lead_id: lead.id, ...(lead.child_birth_date ? {} : { child_birth_date: birth }) });
+      const link = await post('links', { application_id: app.item.id });
+      setToken(link.token); onDone();
+    } catch (err) { setError(err.status === 409 ? 'Este interessado já tem matrícula online. Gere o link na aba Matrícula online.' : err.message); }
+    finally { setBusy(false); }
+  }
+  if (token) return <LinkNotice guardianName={lead.guardian_name} guardianPhone={lead.guardian_phone} childName={lead.child_name} token={token} />;
+  return <form className="structure-form" onSubmit={start}><fieldset disabled={busy}>
+    {error && <div className="error-message wide" role="alert">{error}</div>}
+    {!lead.child_birth_date && <label>Nascimento da criança (a família usa para entrar)<input type="date" required value={birth} onChange={e => setBirth(e.target.value)} /></label>}
+    <button className="primary-button" disabled={busy || !birth}>Iniciar matrícula online</button>
+  </fieldset></form>;
+}
+
 function LeadDetail({ id, onChange, onClose }) {
   const { admissions } = useAuth();
   const [send, busy] = useSender(admissions);
@@ -206,6 +233,7 @@ function LeadDetail({ id, onChange, onClose }) {
         <button className="primary-button" disabled={busy || !note.trim()}>Salvar anotação</button>
       </fieldset>
     </form>
+    {open && <StartOnline lead={lead} onDone={onChange} />}
     {open && <form className="structure-form" onSubmit={e => { e.preventDefault(); act('visit-bookings', { lead_id: lead.id, slot_id: slot }, lead.active_booking_id ? 'Visita remarcada.' : 'Visita agendada.'); }}>
       <fieldset disabled={busy}>
         <div><label htmlFor="lead-slot">{lead.active_booking_id ? 'Remarcar visita' : 'Agendar visita'}</label><select id="lead-slot" required value={slot} onChange={e => setSlot(e.target.value)}>

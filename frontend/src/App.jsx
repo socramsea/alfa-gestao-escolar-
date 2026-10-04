@@ -6,6 +6,7 @@ import EnrollmentPage from './pages/EnrollmentPage.jsx';
 import StaffPage from './pages/StaffPage.jsx';
 import AdmissionsPage from './pages/AdmissionsPage.jsx';
 import SchoolSitePage from './pages/SchoolSitePage.jsx';
+import FamilyEnrollmentPage from './pages/FamilyEnrollmentPage.jsx';
 import { AuthProvider, canAccessSecretaria, useAuth } from './auth/AuthContext.jsx';
 
 function Protected() {
@@ -26,6 +27,7 @@ export default function App() {
   return <AuthProvider><Routes>
     <Route path="/" element={<LoginPage />} />
     <Route path="/escola/:slug" element={<SchoolSitePage />} />
+    <Route path="/matricula/:token" element={<FamilyEnrollmentPage />} />
     <Route element={<Protected />}>
       <Route path="/secretaria" element={<Secretaria />} />
       <Route path="/secretaria/pessoas" element={<Secretaria people />} />
