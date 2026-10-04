@@ -88,6 +88,11 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         for resource in ('members','assignments','assignment-endings'):
             staff_before[resource],_ = call('/api/staff/'+resource,token=token)
             assert len(staff_before[resource]['items'])==1
+        # O spec de captação publica o site, abre um horário e recebe uma pré-matrícula com visita registrada.
+        leads_before,_ = call('/api/admissions/leads',token=token)
+        assert len(leads_before['items'])==1 and leads_before['items'][0]['status']=='visitou'
+        site_before,_ = call('/api/admissions/site',token=token)
+        assert site_before['current']['published']
         run('restart','api')
         for attempt in range(30):
             try:
@@ -101,6 +106,10 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
                 for resource, expected in staff_before.items():
                     actual,_ = call('/api/staff/'+resource,token=token)
                     assert actual==expected
+                actual,_ = call('/api/admissions/leads',token=token)
+                assert actual==leads_before
+                actual,_ = call('/api/admissions/site',token=token)
+                assert actual==site_before
                 break
             except (OSError,AssertionError):
                 if attempt==29: raise
@@ -112,7 +121,9 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
                     'SELECT count(*) FROM class_groups;',capture_output=True,text=True).stdout.strip()
         assert count=='3'
         for table, expected in (('students','2'),('guardians','1'),('student_guardians','1'),('enrollments','1'),('enrollment_events','1'),
-                                ('staff_members','1'),('class_group_staff','1'),('class_group_staff_endings','1'),('staff_events','3')):
+                                ('staff_members','1'),('class_group_staff','1'),('class_group_staff_endings','1'),('staff_events','3'),
+                                ('school_site_addresses','1'),('school_site_versions','1'),('visit_slots','1'),('admission_leads','1'),
+                                ('visit_bookings','1'),('visit_booking_outcomes','1'),('admission_lead_updates','1'),('admission_events','4')):
             count = run('exec','-T','postgres','psql','-U','postgres','-d','restore_probe','-Atc',
                         f'SELECT count(*) FROM {table};',capture_output=True,text=True).stdout.strip()
             assert count==expected

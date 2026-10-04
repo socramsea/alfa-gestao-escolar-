@@ -76,7 +76,7 @@ export default function StructurePage() {
     <header className="topbar"><div><strong>Alfa Gestão Escolar</strong><span>{user.name}</span></div>
       <button className="secondary-button" onClick={logout}>Sair</button></header>
     <div className="page-content">
-      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria" aria-current="page">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais">Profissionais</Link></nav>
+      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria" aria-current="page">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais">Profissionais</Link><Link to="/secretaria/captacao">Captação</Link></nav>
       <p className="eyebrow">Configuração da escola</p><h1>Estrutura escolar</h1>
       <p>Prepare as etapas, os períodos e as turmas da sua escola. Os cadastros são salvos no sistema.</p>
       <nav className="structure-tabs" aria-label="Cadastros da estrutura">{tabs.map(([key,label]) =>

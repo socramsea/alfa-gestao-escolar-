@@ -84,7 +84,7 @@ export default function StaffPage() {
     <header className="topbar"><div><strong>Alfa Gestão Escolar</strong><span>{user.name}</span></div>
       <button className="secondary-button" onClick={logout}>Sair</button></header>
     <div className="page-content">
-      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais" aria-current="page">Profissionais</Link></nav>
+      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais" aria-current="page">Profissionais</Link><Link to="/secretaria/captacao">Captação</Link></nav>
       <h1>Profissionais</h1><p>Cadastre os profissionais e atribua cada um às turmas em que atua. Use dados fictícios neste piloto.</p>
       <nav className="structure-tabs" aria-label="Cadastros de profissionais">{tabs.map(([key,label])=><button key={key} className={tab===key?'primary-button':'secondary-button'} aria-current={tab===key?'page':undefined} disabled={busy} onClick={()=>switchTab(key)}>{label}</button>)}</nav>
       {success && <p className="success-message" role="status">{success}</p>}

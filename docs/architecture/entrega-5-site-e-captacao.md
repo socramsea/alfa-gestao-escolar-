@@ -80,12 +80,27 @@ Matrícula online pela família e conversão do interessado em aluno (entrega se
 
 Migration aditiva após a 007; FKs compostas por escola; RLS ENABLE/FORCE; menor privilégio; fronteira pública somente por funções definer verificadas na inicialização; validação estrita; auditoria na mesma transação; idempotência; nenhum UPDATE ou DELETE no runtime.
 
-## Validação
+## Validação executada em 2026-10-04
 
-Executada em 2026-10-04 num PostgreSQL 16 isolado (porta própria, banco recriado a cada rodada), sem Docker: migrations 001–008, provisionamento de senhas, seeds, API e `node --test` completo. Ver o resultado na mensagem do commit desta entrega.
+Ambiente sem Docker: PostgreSQL 16 isolado em porta própria, com o banco e as roles recriados a cada rodada. As etapas seguem as do gate: migrations 001–008, provisionamento de senhas, seeds, API, suíte completa e verificação de sintaxe.
 
-Ainda falta, no ambiente com Docker:
+- **Backend:** 115 testes aprovados, 16 deles em `backend/tests/admissions/admissions.test.js`. Cobrem:
+  - código público único e imutável, versões, publicação e despublicação;
+  - conteúdo estrito e fotos conferidas pela assinatura, servidas só quando referenciadas na versão publicada;
+  - pré-matrícula com consentimento, campo-isca, validação e idempotência (inclusive a mesma chave em outra escola);
+  - capacidade do horário sob três envios simultâneos;
+  - situação derivada do histórico, reagendamento e comparecimento;
+  - fechamento de horário com reserva pendente;
+  - isolamento e IDOR, perfis, escola suspensa (painel e site), RLS sem contexto, `alfa_auth` sem leitura e runtime sem UPDATE/DELETE;
+  - fronteira pública: só `alfa_app` executa, owner NOLOGIN, e a inicialização recusa função, grant ou RLS alterados;
+  - rollback da auditoria, paginação e limite de envios por origem.
+- **Frontend:** 20 testes do cliente HTTP aprovados, 5 novos em `frontend/tests/admissions.test.js`.
+- **Navegador:** os 6 specs aprovados com build de produção, API e banco isolados. O novo `frontend/e2e/admissions.spec.js` faz o caminho completo: a escola define o endereço, publica o site e abre um horário; a família, num celular, envia a pré-matrícula escolhendo o horário e recebe o protocolo; a secretaria encontra o interessado, registra o comparecimento e confere a persistência após recarregar. Neste ambiente o Chromium rodou como root e precisou de `chromiumSandbox: false` numa configuração local, que não foi versionada.
+
+`deploy/smoke.py` passou a conferir o site publicado e o interessado após reinício, e as contagens das novas tabelas após backup e restauração. O nginx ganhou um limite por IP para a pré-matrícula, repassa o IP real à API e permite prévias `blob:` de foto na área da escola.
+
+## Pendente no ambiente com Docker
 
 1. `GATE_BROWSER=1 npm run test:gate`;
 2. `python3 deploy/smoke.py`;
-3. atualização do piloto local com backup antes e conferência pelo responsável.
+3. atualização do piloto local, com backup antes, comparação das tabelas existentes e conferência visual pelo responsável.

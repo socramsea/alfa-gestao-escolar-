@@ -4,6 +4,8 @@ import SecretariaDashboard from './pages/StructurePage.jsx';
 import PeoplePage from './pages/PeoplePage.jsx';
 import EnrollmentPage from './pages/EnrollmentPage.jsx';
 import StaffPage from './pages/StaffPage.jsx';
+import AdmissionsPage from './pages/AdmissionsPage.jsx';
+import SchoolSitePage from './pages/SchoolSitePage.jsx';
 import { AuthProvider, canAccessSecretaria, useAuth } from './auth/AuthContext.jsx';
 
 function Protected() {
@@ -16,18 +18,20 @@ function Unavailable() {
   const { logout } = useAuth();
   return <main className="login-page"><section className="login-card"><h1>Acesso indisponível</h1><p>Esta área ainda não está habilitada para seu perfil.</p><button onClick={logout}>Sair</button></section></main>;
 }
-function Secretaria({ people = false, enrollment = false, staff = false }) {
+function Secretaria({ people = false, enrollment = false, staff = false, admissions = false }) {
   const { user } = useAuth();
-  return canAccessSecretaria(user) ? (staff ? <StaffPage /> : enrollment ? <EnrollmentPage /> : people ? <PeoplePage /> : <SecretariaDashboard />) : <Unavailable />;
+  return canAccessSecretaria(user) ? (admissions ? <AdmissionsPage /> : staff ? <StaffPage /> : enrollment ? <EnrollmentPage /> : people ? <PeoplePage /> : <SecretariaDashboard />) : <Unavailable />;
 }
 export default function App() {
   return <AuthProvider><Routes>
     <Route path="/" element={<LoginPage />} />
+    <Route path="/escola/:slug" element={<SchoolSitePage />} />
     <Route element={<Protected />}>
       <Route path="/secretaria" element={<Secretaria />} />
       <Route path="/secretaria/pessoas" element={<Secretaria people />} />
       <Route path="/secretaria/matriculas" element={<Secretaria enrollment />} />
       <Route path="/secretaria/profissionais" element={<Secretaria staff />} />
+      <Route path="/secretaria/captacao" element={<Secretaria admissions />} />
       <Route path="/responsavel" element={<Unavailable />} />
       <Route path="/renovacao" element={<Unavailable />} />
     </Route>
