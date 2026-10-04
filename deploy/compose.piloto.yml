@@ -1,0 +1,7 @@
+services:
+  postgres:
+    restart: "no"
+  api:
+    restart: "no"
+  frontend:
+    restart: "no"

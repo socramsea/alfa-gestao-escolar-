@@ -1,0 +1,179 @@
+
+> alfa-gestao-backend@1.0.0 db:audit
+> node scripts/audit-db.js
+
+{"variable":"DATABASE_URL","role":"alfa_app","host":"localhost","port":"5433","database":"alfa_gestao"}
+{"variable":"AUTH_DATABASE_URL","role":"alfa_auth","host":"localhost","port":"5433","database":"alfa_gestao"}
+Conexoes reais da API: [{"usename":"alfa_auth","application_name":"alfa-authentication","rolsuper":false,"rolbypassrls":false},{"usename":"alfa_app","application_name":"alfa-runtime","rolsuper":false,"rolbypassrls":false}]
+PASS: grants, owner e configuracao das funcoes de autenticacao restritos.
+Roles: [
+  {
+    "rolname": "alfa_app",
+    "rolcanlogin": true,
+    "rolsuper": false,
+    "rolcreatedb": false,
+    "rolcreaterole": false,
+    "rolreplication": false,
+    "rolbypassrls": false,
+    "rolinherit": false
+  },
+  {
+    "rolname": "alfa_auth",
+    "rolcanlogin": true,
+    "rolsuper": false,
+    "rolcreatedb": false,
+    "rolcreaterole": false,
+    "rolreplication": false,
+    "rolbypassrls": false,
+    "rolinherit": false
+  },
+  {
+    "rolname": "alfa_auth_owner",
+    "rolcanlogin": false,
+    "rolsuper": false,
+    "rolcreatedb": false,
+    "rolcreaterole": false,
+    "rolreplication": false,
+    "rolbypassrls": false,
+    "rolinherit": false
+  }
+]
+RLS e ownership: [
+  {
+    "relname": "audit_logs",
+    "owner": "postgres",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true
+  },
+  {
+    "relname": "schools",
+    "owner": "postgres",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true
+  },
+  {
+    "relname": "users",
+    "owner": "postgres",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true
+  }
+]
+Policies: [
+  {
+    "tablename": "audit_logs",
+    "policyname": "audit_logs_tenant",
+    "roles": "{alfa_app}",
+    "cmd": "ALL",
+    "qual": "((school_id = (NULLIF(current_setting('app.current_school_id'::text, true), ''::text))::uuid) AND (EXISTS ( SELECT 1\n   FROM schools s\n  WHERE (s.id = audit_logs.school_id))))",
+    "with_check": "((school_id = (NULLIF(current_setting('app.current_school_id'::text, true), ''::text))::uuid) AND (EXISTS ( SELECT 1\n   FROM schools s\n  WHERE (s.id = audit_logs.school_id))))"
+  },
+  {
+    "tablename": "schools",
+    "policyname": "schools_auth_owner_lookup",
+    "roles": "{alfa_auth_owner}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "schools",
+    "policyname": "schools_tenant",
+    "roles": "{alfa_app}",
+    "cmd": "ALL",
+    "qual": "((id = (NULLIF(current_setting('app.current_school_id'::text, true), ''::text))::uuid) AND school_allows_access((status)::text, deleted_at))",
+    "with_check": "((id = (NULLIF(current_setting('app.current_school_id'::text, true), ''::text))::uuid) AND school_allows_access((status)::text, deleted_at))"
+  },
+  {
+    "tablename": "users",
+    "policyname": "users_auth_owner_lookup",
+    "roles": "{alfa_auth_owner}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "users",
+    "policyname": "users_tenant",
+    "roles": "{alfa_app}",
+    "cmd": "ALL",
+    "qual": "((school_id = (NULLIF(current_setting('app.current_school_id'::text, true), ''::text))::uuid) AND (EXISTS ( SELECT 1\n   FROM schools s\n  WHERE (s.id = users.school_id))))",
+    "with_check": "((school_id = (NULLIF(current_setting('app.current_school_id'::text, true), ''::text))::uuid) AND (EXISTS ( SELECT 1\n   FROM schools s\n  WHERE (s.id = users.school_id))))"
+  }
+]
+Indice global: [
+  {
+    "indexdef": "CREATE UNIQUE INDEX users_login_email_unique ON public.users USING btree (lower((email)::text)) WHERE (deleted_at IS NULL)"
+  }
+]
+Regra central: [
+  {
+    "proname": "school_allows_access",
+    "prosecdef": false,
+    "definition": "CREATE OR REPLACE FUNCTION public.school_allows_access(s text, d timestamp with time zone)\n RETURNS boolean\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'pg_catalog'\nAS $function$ SELECT d IS NULL AND s IN ('trial', 'active') $function$\n"
+  }
+]
+Acesso direto alfa_auth: [
+  {
+    "relname": "audit_logs",
+    "table_select": false,
+    "column_select": false
+  },
+  {
+    "relname": "schools",
+    "table_select": false,
+    "column_select": false
+  },
+  {
+    "relname": "users",
+    "table_select": false,
+    "column_select": false
+  }
+]
+Funcoes restritas: [
+  {
+    "signature": "auth_private.authenticate(text,text)",
+    "owner": "alfa_auth_owner",
+    "prosecdef": true,
+    "proconfig": [
+      "search_path=pg_catalog, pg_temp",
+      "row_security=on"
+    ],
+    "proacl": "{alfa_auth_owner=X/alfa_auth_owner,alfa_auth=X/alfa_auth_owner}",
+    "result": "TABLE(id uuid, school_id uuid, name text, email text, role text, active boolean)"
+  },
+  {
+    "signature": "auth_private.resolve_identity(uuid)",
+    "owner": "alfa_auth_owner",
+    "prosecdef": true,
+    "proconfig": [
+      "search_path=pg_catalog, pg_temp",
+      "row_security=on"
+    ],
+    "proacl": "{alfa_auth_owner=X/alfa_auth_owner,alfa_auth=X/alfa_auth_owner}",
+    "result": "TABLE(id uuid, school_id uuid, name text, email text, role text, active boolean)"
+  }
+]
+Migrations: [
+  {
+    "name": "001_create_core_tables"
+  },
+  {
+    "name": "002_tenant_foundation"
+  },
+  {
+    "name": "003_restrict_auth_credentials"
+  }
+]
+Escolas ficticias: [
+  {
+    "name": "Escola Alfa Reis",
+    "status": "trial",
+    "deleted_at": null
+  },
+  {
+    "name": "Escola B Teste",
+    "status": "trial",
+    "deleted_at": null
+  }
+]
+PASS: conexoes reais da API e controles PostgreSQL auditados.

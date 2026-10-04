@@ -1,0 +1,94 @@
+ Network alfa-check-e8635e6994_database Creating 
+ Network alfa-check-e8635e6994_database Creating 
+ Network alfa-check-e8635e6994_database Created 
+ Network alfa-check-e8635e6994_database Created 
+ Container alfa-check-e8635e6994-postgres-1 Creating 
+ Container alfa-check-e8635e6994-postgres-1 Created 
+ Container alfa-check-e8635e6994-postgres-1 Starting 
+ Container alfa-check-e8635e6994-postgres-1 Started 
+ Container alfa-check-e8635e6994-postgres-1 Waiting 
+ Container alfa-check-e8635e6994-postgres-1 Healthy 
+ Container alfa-check-e8635e6994-postgres-1 Running 
+ Container alfa-check-e8635e6994-postgres-1 Waiting 
+ Container alfa-check-e8635e6994-postgres-1 Healthy 
+ Container alfa-check-e8635e6994-setup-run-aec6bf596bbd Creating 
+ Container alfa-check-e8635e6994-setup-run-aec6bf596bbd Created 
+> Migrating files:
+> - 001_create_core_tables
+> - 002_tenant_foundation
+> - 003_restrict_auth_credentials
+> - 004_school_structure
+> - 005_people_and_guardians
+### MIGRATION 001_create_core_tables (UP) ###
+### MIGRATION 002_tenant_foundation (UP) ###
+### MIGRATION 003_restrict_auth_credentials (UP) ###
+### MIGRATION 004_school_structure (UP) ###
+### MIGRATION 005_people_and_guardians (UP) ###
+Senhas das roles configuradas sem exibicao.
+Escola de teste e administrador criados. Nenhuma senha foi exibida.
+ Container alfa-check-e8635e6994-postgres-1 Running 
+ Container alfa-check-e8635e6994-postgres-1 Waiting 
+ Container alfa-check-e8635e6994-postgres-1 Healthy 
+ Container alfa-check-e8635e6994-setup-run-d5a1b1b90a24 Creating 
+ Container alfa-check-e8635e6994-setup-run-d5a1b1b90a24 Created 
+No migrations to run!
+Senhas das roles configuradas sem exibicao.
+Escola e administrador já cadastrados; credenciais e dados preservados.
+PASS: migrations, provisionamento e bootstrap repetidos sem duplicação
+ Container alfa-check-e8635e6994-postgres-1 Running 
+ Network alfa-check-e8635e6994_web Creating 
+ Network alfa-check-e8635e6994_web Creating 
+ Network alfa-check-e8635e6994_web Created 
+ Network alfa-check-e8635e6994_web Created 
+ Container alfa-check-e8635e6994-api-1 Creating 
+ Container alfa-check-e8635e6994-api-1 Created 
+ Container alfa-check-e8635e6994-frontend-1 Creating 
+ Container alfa-check-e8635e6994-frontend-1 Created 
+ Container alfa-check-e8635e6994-postgres-1 Waiting 
+ Container alfa-check-e8635e6994-postgres-1 Healthy 
+ Container alfa-check-e8635e6994-api-1 Starting 
+ Container alfa-check-e8635e6994-api-1 Started 
+ Container alfa-check-e8635e6994-api-1 Waiting 
+ Container alfa-check-e8635e6994-api-1 Healthy 
+ Container alfa-check-e8635e6994-frontend-1 Starting 
+ Container alfa-check-e8635e6994-frontend-1 Started 
+ Container alfa-check-e8635e6994-api-1 Waiting 
+ Container alfa-check-e8635e6994-frontend-1 Waiting 
+ Container alfa-check-e8635e6994-postgres-1 Waiting 
+ Container alfa-check-e8635e6994-postgres-1 Healthy 
+ Container alfa-check-e8635e6994-api-1 Healthy 
+ Container alfa-check-e8635e6994-frontend-1 Healthy 
+PASS: proxy, headers, readiness e runtime sem credenciais administrativas
+
+> alfa-gestao-frontend@1.0.0 test:e2e
+> playwright test
+
+
+Running 2 tests using 1 worker
+
+(node:3205468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/people.spec.js:2:1 › administrador cadastra aluno, responsavel e vinculo; persiste apos reload e nova sessao (5.3s)
+  ✓  2 e2e/structure.spec.js:2:1 › administrador configura a escola, cria turma, recarrega e encerra sessao (4.6s)
+
+  2 passed (12.6s)
+ Container alfa-check-e8635e6994-api-1 Restarting 
+ Container alfa-check-e8635e6994-api-1 Started 
+PASS: persistência após reinício; backup/restauração em banco descartável
+DEPLOY SMOKE PASS: stack, navegador e dados fictícios verificados
+ Container alfa-check-e8635e6994-frontend-1 Stopping 
+ Container alfa-check-e8635e6994-frontend-1 Stopped 
+ Container alfa-check-e8635e6994-frontend-1 Removing 
+ Container alfa-check-e8635e6994-frontend-1 Removed 
+ Container alfa-check-e8635e6994-api-1 Stopping 
+ Container alfa-check-e8635e6994-api-1 Stopped 
+ Container alfa-check-e8635e6994-api-1 Removing 
+ Container alfa-check-e8635e6994-api-1 Removed 
+ Container alfa-check-e8635e6994-postgres-1 Stopping 
+ Container alfa-check-e8635e6994-postgres-1 Stopped 
+ Container alfa-check-e8635e6994-postgres-1 Removing 
+ Container alfa-check-e8635e6994-postgres-1 Removed 
+ Network alfa-check-e8635e6994_database Removing 
+ Network alfa-check-e8635e6994_web Removing 
+ Network alfa-check-e8635e6994_web Removed 
+ Network alfa-check-e8635e6994_database Removed 

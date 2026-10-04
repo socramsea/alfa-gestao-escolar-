@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: alfa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alfa_gestao
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no ambiente ou .env local}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
