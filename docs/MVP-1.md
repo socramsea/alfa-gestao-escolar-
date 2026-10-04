@@ -48,6 +48,8 @@ Fica para o MVP 2 ou depois, conforme o [roteiro](ROTEIRO.md):
 
 ## Antes do passo a passo
 
+Para a reunião, o sistema roda num servidor com HTTPS: siga [`deploy/NO-AR.md`](../deploy/NO-AR.md). Os passos abaixo são para a sua máquina.
+
 Faça na sua máquina, no terminal, nesta ordem.
 
 ### 1. Atualizar a pasta do projeto
@@ -88,7 +90,7 @@ Confira se o arquivo `deploy/backups/piloto-antes-mvp1.dump` foi criado e não e
 
 ## Passo a passo de demonstração
 
-- **Onde:** abra `http://127.0.0.1:8088` e entre com o acesso do piloto, descrito em [`deploy/PILOTO-LOCAL.md`](../deploy/PILOTO-LOCAL.md).
+- **Onde:** abra o endereço do servidor ([`deploy/NO-AR.md`](../deploy/NO-AR.md)) ou o piloto local em `http://127.0.0.1:8088` ([`deploy/PILOTO-LOCAL.md`](../deploy/PILOTO-LOCAL.md)), e entre com o acesso de administrador.
 - **Dados:** use só dados fictícios.
 - **Família:** faça a parte dela numa janela anônima ou no celular.
 - **Registro:** marque cada passo que funcionou e anote tudo o que estranhar, mesmo que pareça pequeno.

@@ -12,7 +12,9 @@ school = input('Nome da escola de teste: ').strip()
 email = input('E-mail do administrador: ').strip().lower()
 password = getpass.getpass('Senha do administrador (12 a 72 bytes): ')
 confirmation = getpass.getpass('Confirme a senha: ')
-origin = input('Origem pública [http://localhost:8080]: ').strip() or 'http://localhost:8080'
+# deploy/servidor/instalar.sh sugere a origem HTTPS do domínio; localmente, o padrão continua localhost.
+default_origin = os.environ.get('ALFA_ORIGEM_SUGERIDA', 'http://localhost:8080')
+origin = input(f'Origem pública [{default_origin}]: ').strip() or default_origin
 if not school or '@' not in email or not 12 <= len(password.encode()) <= 72 or password != confirmation:
     raise SystemExit('Dados inválidos; nenhum arquivo criado.')
 parsed = urlparse(origin)
