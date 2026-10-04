@@ -197,6 +197,20 @@ test('captacao: situacao derivada do historico, reagendamento, comparecimento e 
   }
 });
 
+test('captacao: comparecimento registrado depois do desfecho nao reabre o atendimento',async()=>{
+  const slot=await add(a,'visit-slots',{date:future(6),time:'10:00',capacity:4});
+  for(const final of ['matriculado','desistiu']){
+    const created=await add(a,'leads',{...lead({interest:'matricula'}),source:'whatsapp'});
+    const booking=await add(a,'visit-bookings',{lead_id:created.id,slot_id:slot.id});
+    await add(a,'lead-updates',{lead_id:created.id,status:final});
+    await add(a,'visit-outcomes',{booking_id:booking.id,outcome:'compareceu'});
+    const detail=(await (await api(a,`admissions/leads/${created.id}`)).json()).item;
+    assert.equal(detail.status,final);
+    assert.deepEqual(detail.updates.map(u=>u.status),[final]);
+    assert.deepEqual(detail.bookings.map(x=>x.outcome),['compareceu']);
+  }
+});
+
 test('visitas: horario com reserva pendente nao fecha; agenda lista reservas ativas da propria escola',async()=>{
   const slot=await add(a,'visit-slots',{date:future(6),time:'09:00',capacity:2});
   const l=await add(a,'leads',{...lead(),source:'presencial'});

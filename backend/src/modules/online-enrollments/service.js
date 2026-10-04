@@ -210,6 +210,8 @@ const inserts = {
     [user.school_id, submission.application_id, submission.id, data.decision, data.note, studentId, enrollmentId]);
     // A captação acompanha o desfecho da matrícula.
     if (submission.lead_id && data.decision !== 'correcao') {
+      // Mesma trava do registro de visita: o comparecimento lê o desfecho já gravado.
+      await lock(client, `lead-booking:${submission.lead_id}`);
       await client.query(`INSERT INTO public.admission_lead_updates(school_id,lead_id,status,note) VALUES($1,$2,$3,$4)`,
         [user.school_id, submission.lead_id, data.decision === 'aprovada' ? 'matriculado' : 'desistiu', data.note]);
     }

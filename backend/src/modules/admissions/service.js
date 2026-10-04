@@ -7,6 +7,8 @@ export const sources = ['site','whatsapp','indicacao','instagram','presencial','
 export const interests = ['visita','matricula','informacoes'];
 export const updateStatuses = ['em_contato','visitou','matriculado','desistiu'];
 export const leadStatuses = ['novo','em_contato','visita_agendada','visitou','matriculado','desistiu'];
+// Desfechos do atendimento: só uma anotação da equipe reabre; nada automático volta a situação.
+const finalStatuses = ['matriculado','desistiu'];
 export const outcomes = ['compareceu','nao_compareceu','cancelada'];
 export const imageTypes = ['image/jpeg','image/png','image/webp'];
 // Horários de visita são combinados no fuso da escola. Escolas fora deste fuso exigem especificação.
@@ -271,7 +273,7 @@ const inserts = {
     await lock(client, `lead-booking:${data.lead_id}`);
     const lead = await findLead(client, user, data.lead_id);
     if (!lead) fail(404);
-    if (['matriculado','desistiu'].includes(lead.status)) fail(409);
+    if (finalStatuses.includes(lead.status)) fail(409);
     await slotLock(client, data.slot_id);
     await openSlot(client, user, data.slot_id);
     // Reagendar cancela a visita pendente anterior; o histórico permanece.
@@ -288,9 +290,11 @@ const inserts = {
       [user.school_id, data.booking_id]);
     if (!booking) fail(404);
     await lock(client, `lead-booking:${booking.lead_id}`);
+    const lead = await findLead(client, user, booking.lead_id);
     const { rows:[item] } = await client.query(`INSERT INTO public.visit_booking_outcomes(school_id,booking_id,outcome)
       VALUES($1,$2,$3) RETURNING id`, [user.school_id, data.booking_id, data.outcome]);
-    if (data.outcome === 'compareceu') {
+    // O comparecimento fica no histórico da visita, mas não desfaz matrícula ou desistência já registradas.
+    if (data.outcome === 'compareceu' && !finalStatuses.includes(lead.status)) {
       await client.query(`INSERT INTO public.admission_lead_updates(school_id,lead_id,status) VALUES($1,$2,'visitou')`,
         [user.school_id, booking.lead_id]);
     }
