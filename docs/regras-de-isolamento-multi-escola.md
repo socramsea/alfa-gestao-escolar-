@@ -66,7 +66,10 @@ A autenticação é realizada pelo endpoint:
 
 ```http
 POST /api/auth/login
+{ "school": "alfa-reis", "email": "...", "password": "..." }
 ```
+
+Como o e-mail é único por escola, o login informa o código (`slug`) da escola.
 
 O login deve validar:
 
@@ -144,6 +147,34 @@ Aluno. Deve possuir acesso restrito aos próprios dados e aos módulos autorizad
 | Alterar `school_id` pelo cliente | proibido | proibido | proibido | proibido |
 
 Toda nova rota deve ser adicionada a esta matriz antes de ser implementada.
+
+### 7.1 Matriz implementada (perfis da escola)
+
+A matriz em vigor está em `src/modules/access/permissions.ts`, que é a fonte única. Toda rota declara a permissão exigida.
+
+| Permissão | school_admin | director | secretary | finance | coordinator | teacher |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| `school:read` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `users:read` | ✓ | ✓ | | | | |
+| `users:manage` | ✓ | | | | | |
+| `academic:read` (anos e turmas) | ✓ | ✓ | ✓ | | ✓ | ✓ |
+| `academic:manage` | ✓ | | ✓ | | | |
+| `students:read` | ✓ | ✓ | ✓ | | ✓ | |
+| `students:manage` | ✓ | | ✓ | | | |
+| `guardians:invite` (link de acesso) | ✓ | | ✓ | | | |
+| `renewals:read` | ✓ | ✓ | ✓ | | | |
+| `renewals:manage` (períodos) | ✓ | | ✓ | | | |
+| `renewals:review` (aprovar/rejeitar) | ✓ | | ✓ | | | |
+| `dashboard:read` | ✓ | ✓ | ✓ | | | |
+| `audit:read` | ✓ | ✓ | | | | |
+
+O responsável não é usuário da equipe. Ele acessa o portal por link pessoal (ADR-002) e só enxerga alunos vinculados a ele em `student_guardians`. Uma tentativa de acessar outro aluno retorna `404`, sem revelar que o registro existe.
+
+`platform_admin` e `student` ainda não foram implementados e aguardam as decisões da seção 17.
+
+### 7.2 Isolamento no banco de dados
+
+Além do filtro por `school_id` nas consultas, as relações entre tabelas usam chaves estrangeiras compostas `(id, school_id)`. Assim o PostgreSQL recusa, por exemplo, um aluno da Escola B apontando para uma turma da Escola A, mesmo que o código falhe.
 
 ## 8. Isolamento obrigatório nas consultas
 
@@ -333,7 +364,7 @@ Esta regra é obrigatória para todas as áreas futuras da API.
 As decisões abaixo devem ser formalizadas antes de novas implementações:
 
 1. `platform_admin` terá acesso global ou ficará limitado ao `school_id` do token?
-2. O e-mail será único globalmente ou apenas dentro de cada escola?
+2. ~~O e-mail será único globalmente ou apenas dentro de cada escola?~~ Implementado como único por escola, com login informando o código da escola.
 3. Quais módulos cada perfil (`school_admin`, `teacher` e `student`) poderá acessar?
 4. Quais operações exigirão auditoria?
 

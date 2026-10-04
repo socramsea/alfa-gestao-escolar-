@@ -18,8 +18,8 @@ export const DEMO_PASSWORD = 'AlfaDemo2026';
 const FIRST_NAMES = ['Ana', 'Bruno', 'Clara', 'Davi', 'Elisa', 'Felipe', 'Giovana', 'Heitor', 'Isabela', 'João',
   'Lara', 'Miguel', 'Nina', 'Otávio', 'Pietra', 'Rafael', 'Sofia', 'Theo', 'Valentina', 'Arthur', 'Helena',
   'Lucas', 'Manuela', 'Gabriel', 'Alice', 'Samuel', 'Laura', 'Enzo', 'Beatriz', 'Pedro'];
-const GUARDIAN_NAMES = ['Mariana', 'Carlos', 'Patrícia', 'Ricardo', 'Fernanda', 'Rodrigo', 'Juliana', 'André',
-  'Camila', 'Marcelo', 'Renata', 'Paulo', 'Aline', 'Fábio', 'Tatiane'];
+const MOTHER_NAMES = ['Mariana', 'Patrícia', 'Fernanda', 'Juliana', 'Camila', 'Renata', 'Aline', 'Tatiane'];
+const FATHER_NAMES = ['Carlos', 'Ricardo', 'Rodrigo', 'André', 'Marcelo', 'Paulo', 'Fábio'];
 const SURNAMES = ['Silva', 'Souza', 'Oliveira', 'Santos', 'Pereira', 'Lima', 'Carvalho', 'Ferreira', 'Rodrigues',
   'Almeida', 'Costa', 'Gomes', 'Martins', 'Araújo', 'Barbosa'];
 
@@ -117,7 +117,7 @@ async function seed() {
 
     // Alunos: 6 a 8 por turma, alguns irmãos compartilhando o responsável.
     const studentIds: { id: string; className: string }[] = [];
-    type DemoGuardian = { name: string; phone: string; surname: string };
+    type DemoGuardian = { name: string; phone: string; surname: string; relationship: 'mother' | 'father' };
     let lastGuardian: DemoGuardian | null = null;
 
     for (const item of CLASSES) {
@@ -125,8 +125,10 @@ async function seed() {
       for (let i = 0; i < count; i++) {
         const sibling: DemoGuardian | null = lastGuardian && random() < 0.15 ? lastGuardian : null;
         const surname = sibling ? sibling.surname : pick(SURNAMES);
+        const relationship = random() < 0.7 ? 'mother' : 'father';
         const guardian: DemoGuardian = sibling ?? {
-          name: `${pick(GUARDIAN_NAMES)} ${pick(SURNAMES)} ${surname}`,
+          relationship,
+          name: `${pick(relationship === 'mother' ? MOTHER_NAMES : FATHER_NAMES)} ${pick(SURNAMES)} ${surname}`,
           phone: `119${String(Math.floor(10_000_000 + random() * 89_999_999))}`,
           surname,
         };
@@ -145,7 +147,7 @@ async function seed() {
               {
                 full_name: guardian.name,
                 phone: guardian.phone,
-                relationship: random() < 0.7 ? 'mother' : 'father',
+                relationship: guardian.relationship,
                 is_financial_responsible: true,
                 is_primary_contact: true,
               },

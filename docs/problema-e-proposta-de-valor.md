@@ -82,7 +82,7 @@ O fluxo mínimo descrito na visão do MVP prevê que a Secretaria cadastre aluno
 
 **Proposta:** permitir que o cadastro inicial seja feito pelo próprio responsável, a partir de um link gerado pela escola, com validação posterior da Secretaria. O cadastro feito pela Secretaria continua disponível.
 
-Conforme a seção 14 da visão do MVP, esta alteração deve ser registrada em ADR, revisada pelo responsável arquitetural e refletida nos critérios de aceite antes de ser implementada.
+Registrada em `docs/decisoes/ADR-002-cadastro-pelo-responsavel.md`, aguardando revisão do responsável arquitetural.
 
 ## 6. Indicadores de sucesso (a validar com a escola)
 

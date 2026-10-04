@@ -253,6 +253,8 @@ Sistema registra status, data, usuário e histórico
 
 O MVP somente será considerado funcional quando esse fluxo puder ser executado com dados fictícios da Escola Alfa Reis.
 
+> **Atualização (ADR-002):** o cadastro da Secretaria passa a ser mínimo (nome e nascimento do aluno, nome e telefone do responsável) ou por importação de lista. O responsável completa os demais dados pelo link pessoal enviado via WhatsApp, e a Secretaria confere apenas o que foi alterado.
+
 ## 9. Entidades iniciais
 
 A base inicial deve ser preparada para as seguintes entidades:
