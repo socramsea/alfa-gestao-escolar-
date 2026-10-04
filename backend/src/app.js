@@ -9,6 +9,8 @@ import structureRoutes from './modules/structure/structure.routes.js';
 import peopleRoutes from './modules/people/people.routes.js';
 import enrollmentsRoutes from './modules/enrollments/enrollments.routes.js';
 import staffRoutes from './modules/staff/staff.routes.js';
+import admissionsRoutes from './modules/admissions/admissions.routes.js';
+import publicRoutes from './modules/admissions/public.routes.js';
 import { pool } from './config/db.js';
 
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -47,6 +49,8 @@ app.use('/api/structure', structureRoutes);
 app.use('/api/people', peopleRoutes);
 app.use('/api/enrollments', enrollmentsRoutes);
 app.use('/api/staff', staffRoutes);
+app.use('/api/admissions', admissionsRoutes);
+app.use('/api/public', publicRoutes);
 
 app.use((req, res) => res.status(404).json({ error: "Rota nao encontrada" }));
 app.use(errorHandler);

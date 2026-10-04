@@ -5,6 +5,8 @@ import { structureTables } from '../modules/structure/catalog.js';
 import { peopleTables } from '../modules/people/service.js';
 import { enrollmentTables } from '../modules/enrollments/service.js';
 import { staffTables } from '../modules/staff/service.js';
+import { admissionTables } from '../modules/admissions/service.js';
+import { assertSiteBoundary } from './site-boundary.js';
 
 function connection(variable, role) {
   const value = process.env[variable];
@@ -34,11 +36,12 @@ export async function testDatabaseConnection() {
     }
     const { rows } = await p.query(`SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity
       FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-      WHERE n.nspname='public' AND c.relname=ANY($1::text[])`, [['schools','users','audit_logs',...structureTables,...peopleTables,...enrollmentTables,...staffTables]]);
-    if (rows.length !== 3 + structureTables.length + peopleTables.length + enrollmentTables.length + staffTables.length || rows.some(r => !r.relrowsecurity || !r.relforcerowsecurity)) {
+      WHERE n.nspname='public' AND c.relname=ANY($1::text[])`, [['schools','users','audit_logs',...structureTables,...peopleTables,...enrollmentTables,...staffTables,...admissionTables]]);
+    if (rows.length !== 3 + structureTables.length + peopleTables.length + enrollmentTables.length + staffTables.length + admissionTables.length || rows.some(r => !r.relrowsecurity || !r.relforcerowsecurity)) {
       throw new Error('RLS obrigatorio ausente');
     }
   }
   await assertAuthBoundary(authPool);
-  console.log('Banco validado: roles restritas, RLS/FORCE ativos e alfa_auth sem leitura direta de tabelas.');
+  await assertSiteBoundary(pool);
+  console.log('Banco validado: roles restritas, RLS/FORCE ativos, alfa_auth sem leitura direta de tabelas e site publico somente por funcoes.');
 }

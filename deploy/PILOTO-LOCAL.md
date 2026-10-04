@@ -59,3 +59,15 @@ A tela **Matrículas** usa alunos e estrutura já cadastrados. Escolha aluno, pe
 5. Em **Encerrar atribuição**, selecione a atribuição, informe o último dia e confirme; a situação passa a `Encerrada`.
 
 O cadastro não cria conta de acesso. A mesma profissional não pode ter duas atribuições na mesma turma com datas que se cruzam. Não há edição nem exclusão; disciplinas e horários ficam para entregas posteriores. O fluxo foi executado no piloto por navegador automatizado em 2026-10-04 (`Professora Fictícia Piloto`, turma T1, encerrada em 30/06/2027); falta a conferência visual pelo responsável.
+
+## Site da escola e captação
+
+1. Clique em **Captação** no topo e abra a aba **Site da escola**.
+2. Defina o endereço, por exemplo `escola-piloto`. Ele não pode ser alterado depois.
+3. Preencha o título, uma peça de uniforme e uma turma. Clique em **Salvar e publicar**.
+4. Na aba **Visitas**, deixe só um dia marcado, horário `09:00`, uma semana e uma família por horário. Clique em **Abrir horários**.
+5. Abra `http://127.0.0.1:8088/escola/escola-piloto` no celular ou numa janela anônima. Preencha a pré-matrícula com dados fictícios, escolha o horário e envie. Anote o protocolo.
+6. Volte à aba **Interessados**, abra o protocolo e clique em **Compareceu**. A situação passa a **Visitou**.
+7. Recarregue a página e confira que tudo continua lá.
+
+A pré-matrícula não cria aluno nem matrícula. Fotos são opcionais: sem foto, o site mostra uma ilustração.
