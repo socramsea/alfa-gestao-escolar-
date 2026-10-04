@@ -48,4 +48,4 @@ Pessoas com nomes iguais são permitidas. Use nascimento/contato e a identifica�
 
 ## Matrículas
 
-A tela **Matrículas** usa alunos e estrutura já cadastrados. Escolha aluno, período, turma e grupo/série para confirmar. A regra deste piloto aceita uma matrícula por aluno/período; turma é obrigatória. Não há controle de vagas, cancelamento, transferência ou renovação. O fluxo foi conferido no navegador do piloto em 2026-10-03.
+A tela **Matrículas** usa alunos e estrutura já cadastrados. Escolha aluno, período, turma e grupo/série para confirmar. A regra deste piloto aceita uma matrícula por aluno/período; turma é obrigatória. Não há controle de vagas, cancelamento, transferência ou renovação. O fluxo foi executado no piloto por navegador automatizado em 2026-10-04 (aluno `Aluno Fictício Piloto`, matrícula em 2027/T1); falta a conferência visual pelo responsável.

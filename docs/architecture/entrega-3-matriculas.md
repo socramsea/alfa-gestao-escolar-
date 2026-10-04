@@ -1,6 +1,6 @@
 # Entrega 3 — matrícula com turma obrigatória
 
-Status: implementação do recorte local concluída; gate local isolado e smoke Docker de deploy aprovados em 2026-10-03; fluxo de matrícula conferido pelo responsável no piloto local na mesma data.
+Status: implementação do recorte local concluída; gate local isolado e smoke Docker de deploy aprovados em 2026-10-03; fluxo de matrícula executado no piloto local por navegador automatizado em 2026-10-04 e conferido no banco; conferência visual pelo responsável ainda pendente.
 
 ## Autorização recebida
 
@@ -52,4 +52,4 @@ Smoke Docker de deploy, também em 2026-10-03: `python3 deploy/smoke.py` termino
 
 Bloqueio de host encontrado e resolvido antes do smoke: havia dois daemons Docker ativos no mesmo socket (`docker-ce` do apt e o snap `docker` 29.8.0). Quando o snap atendia, o AppArmor negava a troca do perfil `snap.docker.dockerd` para `docker-default` sob `no-new-privileges` (`exec: operation not permitted`). O snap foi parado e desabilitado; o smoke passou no `docker-ce` 29.8.2. Nenhum controle do pacote foi removido. O banco de desenvolvimento da porta 5433 existia somente no daemon do snap; há dump em `deploy/backups/`.
 
-Limites: o piloto local teve backup (`piloto-antes-smoke-matriculas-20261004T020514Z.dump`), e foi reiniciado com as imagens novas, preservando os cadastros. O responsável conferiu o fluxo de matrícula no navegador do piloto e informou que funcionou. O resultado local não certifica publicação remota.
+Limites: o piloto local teve backup (`piloto-antes-smoke-matriculas-20261004T020514Z.dump`), e foi reiniciado com as imagens novas, preservando os cadastros. Em 2026-10-04, um roteiro de navegador automatizado executou no piloto (`http://127.0.0.1:8088`) o cadastro de um aluno fictício, a matrícula em 2027/T1/Grupo 1, a recusa da segunda tentativa (409) e a persistência após recarregar; o banco do piloto ficou com 1 aluno, 1 matrícula e 1 evento de auditoria. Um registro anterior de conferência manual em 2026-10-03 foi retirado: o banco e o log de acessos do piloto não mostravam nenhum cadastro de aluno ou matrícula naquela data. A conferência visual pelo responsável continua pendente. O resultado local não certifica publicação remota.
