@@ -8,15 +8,16 @@ export default function EnrollmentPage(){
   const {user,logout,people,structure,enroll}=useAuth();
   const [students,setStudents]=useState([]),[years,setYears]=useState([]),[groups,setGroups]=useState([]),[levels,setLevels]=useState([]),[items,setItems]=useState([]);
   const [form,setForm]=useState(initial);const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState(''),[revision,setRevision]=useState(0);
+  const [page,setPage]=useState(1),[more,setMore]=useState(false);
   const saving=useRef(false),attempt=useRef(null);
   useEffect(()=>{
     let live=true;const controller=new AbortController();setLoading(true);setError('');
     async function all(request,resource){const result=[];let page=1;for(;;){const data=await request(`${resource}?page=${page++}`,{signal:controller.signal});result.push(...data.items);if(!data.has_more)return result;}}
-    Promise.all([all(people,'students'),all(structure,'academic-years'),all(structure,'class-groups'),all(structure,'levels'),enroll('',{signal:controller.signal})])
-      .then(([s,y,g,l,e])=>{if(live){setStudents(s);setYears(y);setGroups(g);setLevels(l);setItems(e.items);}})
+    Promise.all([all(people,'students'),all(structure,'academic-years'),all(structure,'class-groups'),all(structure,'levels'),enroll(`?page=${page}`,{signal:controller.signal})])
+      .then(([s,y,g,l,e])=>{if(live){setStudents(s);setYears(y);setGroups(g);setLevels(l);setItems(e.items);setMore(e.has_more);}})
       .catch(e=>{if(live)setError(e.message);}).finally(()=>{if(live)setLoading(false);});
     return()=>{live=false;controller.abort();};
-  },[people,structure,enroll,revision]);
+  },[people,structure,enroll,page,revision]);
   const availableGroups=groups.filter(g=>g.academic_year_id===form.academic_year_id);
   const availableLevels=levels.filter(l=>l.stage_code===groups.find(g=>g.id===form.class_group_id)?.stage_code
     && groups.find(g=>g.id===form.class_group_id)?.level_ids?.includes(l.id));
@@ -50,7 +51,8 @@ export default function EnrollmentPage(){
             <button className="primary-button" disabled={busy||!students.length}>{busy?'Salvando…':'Confirmar matrícula'}</button>
           </fieldset></form>
         </section>
-        <section className="panel"><h2>Matrículas da escola</h2>{!items.length?<p>Nenhuma matrícula nesta página.</p>:<div className="table-wrapper"><table><thead><tr><th>Aluno</th><th>Período</th><th>Turma</th><th>Grupo/série</th><th>Confirmada em</th></tr></thead><tbody>{items.map(item=><tr key={item.id}><td>{item.student_name} · ID {item.student_id}</td><td>{item.academic_year_code}</td><td>{groupName(item.class_group_id)}</td><td>{levelName(item.level_id)}</td><td>{new Date(item.created_at).toLocaleDateString('pt-BR')}</td></tr>)}</tbody></table></div>}</section>
+        <section className="panel"><h2>Matrículas da escola</h2>{!items.length?<p>Nenhuma matrícula nesta página.</p>:<div className="table-wrapper"><table><thead><tr><th>Aluno</th><th>Período</th><th>Turma</th><th>Grupo/série</th><th>Confirmada em</th></tr></thead><tbody>{items.map(item=><tr key={item.id}><td>{item.student_name} · ID {item.student_id}</td><td>{item.academic_year_code}</td><td>{groupName(item.class_group_id)}</td><td>{levelName(item.level_id)}</td><td>{new Date(item.created_at).toLocaleDateString('pt-BR')}</td></tr>)}</tbody></table></div>}
+          <div className="structure-tabs"><button className="secondary-button" disabled={page===1||busy} onClick={()=>setPage(p=>p-1)}>Anterior</button><span>Página {page}</span><button className="secondary-button" disabled={!more||busy} onClick={()=>setPage(p=>p+1)}>Próxima</button></div></section>
       </>}
       <section className="panel"><h2>Escopo desta entrega</h2><p>Uma matrícula por aluno em cada período letivo. Turma é obrigatória. Controle de vagas, renovação, transferência, edição e cancelamento ainda não estão implementados.</p></section>
     </div>

@@ -52,3 +52,28 @@ test('administrador matricula aluno em turma; duplicidade recusada; persiste apo
   await login();await expect(row).toHaveCount(1);
   expect(errors).toEqual([]);
 });
+test('lista de matriculas navega entre paginas do servidor',async({page})=>{
+  if(!process.env.E2E_BASE_URL || !process.env.E2E_EMAIL || !process.env.E2E_PASSWORD)throw Error('Ambiente E2E isolado obrigatorio');
+  // Somente a listagem é simulada; criar mais de 100 matrículas reais alteraria as contagens conferidas pelo smoke.
+  const requested=[];
+  await page.route(/\/api\/enrollments\/\?page=\d+$/,route=>{
+    const number=Number(new URL(route.request().url()).searchParams.get('page'));requested.push(number);
+    return route.fulfill({json:{page:number,has_more:number===1,items:[{id:`fixture-${number}`,student_id:`aluno-${number}`,
+      student_name:`Aluno da página ${number}`,academic_year_code:'2027',class_group_id:'turma',level_id:'serie',created_at:'2027-02-01T12:00:00Z'}]}});
+  });
+  await page.goto('/');await page.getByLabel(/e-mail/i).fill(process.env.E2E_EMAIL);
+  await page.getByLabel(/senha/i).fill(process.env.E2E_PASSWORD);
+  await page.getByRole('button',{name:/entrar/i}).click();
+  await expect(page.getByRole('heading',{name:'Estrutura escolar',exact:true})).toBeVisible();
+  await page.getByRole('link',{name:'Matrículas',exact:true}).click();
+  const previous=page.getByRole('button',{name:'Anterior',exact:true}),next=page.getByRole('button',{name:'Próxima',exact:true});
+  await expect(page.getByRole('row').filter({hasText:'Aluno da página 1'})).toHaveCount(1);
+  await expect(page.getByText('Página 1',{exact:true})).toBeVisible();await expect(previous).toBeDisabled();
+  await next.click();
+  await expect(page.getByRole('row').filter({hasText:'Aluno da página 2'})).toHaveCount(1);
+  await expect(page.getByRole('row').filter({hasText:'Aluno da página 1'})).toHaveCount(0);
+  await expect(page.getByText('Página 2',{exact:true})).toBeVisible();await expect(next).toBeDisabled();
+  await previous.click();
+  await expect(page.getByRole('row').filter({hasText:'Aluno da página 1'})).toHaveCount(1);
+  expect(requested).toEqual([1,2,1]);
+});
