@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
+import ImportPanel from './ImportPanel.jsx';
 
-const tabs = [['students','Alunos'],['guardians','Responsáveis'],['student-guardians','Vínculos']];
+const tabs = [['students','Alunos'],['guardians','Responsáveis'],['student-guardians','Vínculos'],['import','Importar planilha']];
 const initial = () => ({ full_name:'', birth_date:'', phone:'', email:'', student_id:'', guardian_id:'', relationship:'', is_legal:false });
 const civil = date => date?.split('-').reverse().join('/') || '';
 export default function PeoplePage() {
@@ -21,6 +22,7 @@ export default function PeoplePage() {
   const saving = useRef(false);
   const attempt = useRef(null);
   useEffect(() => {
+    if(tab==='import'){setLoading(false);return undefined;}
     let live=true;
     const controller=new AbortController();
     setLoading(true); setError('');
@@ -72,7 +74,7 @@ export default function PeoplePage() {
       <nav className="structure-tabs" aria-label="Cadastros de pessoas">{tabs.map(([key,label])=><button key={key} className={tab===key?'primary-button':'secondary-button'} aria-current={tab===key?'page':undefined} disabled={busy} onClick={()=>switchTab(key)}>{label}</button>)}</nav>
       {success && <p className="success-message" role="status">{success}</p>}
       {error && <div className="error-message" role="alert">{error} <button className="secondary-button" onClick={()=>setRevision(n=>n+1)}>Atualizar dados</button></div>}
-      {loading ? <p role="status">Carregando cadastros…</p> : <>
+      {tab==='import' ? <ImportPanel /> : loading ? <p role="status">Carregando cadastros…</p> : <>
         <section className="panel"><h2>Novo cadastro — {tabs.find(t=>t[0]===tab)[1]}</h2>
           <form className="structure-form" onSubmit={save}><fieldset disabled={busy}>
             {tab !== 'student-guardians' && <label>Nome completo<input required name="full_name" maxLength={150} value={form.full_name} onChange={field}/></label>}

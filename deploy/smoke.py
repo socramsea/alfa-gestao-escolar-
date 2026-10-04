@@ -77,14 +77,15 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         token = identity['token']
         # Os specs de estrutura, matrícula, profissionais e matrícula online criam uma turma cada; pessoas, matrícula
         # e matrícula online criam um aluno cada; a matrícula online aprovada cria responsável, vínculo e matrícula.
+        # A importação cria as turmas T1 e T2 e importa dois irmãos com a mesma mãe, matriculados.
         before,_ = call('/api/structure/class-groups',token=token)
-        assert len(before['items'])==4
+        assert len(before['items'])==6
         people_before = {}
-        for resource, expected in (('students',3),('guardians',2),('student-guardians',2)):
+        for resource, expected in (('students',5),('guardians',3),('student-guardians',4)):
             people_before[resource],_ = call('/api/people/'+resource,token=token)
             assert len(people_before[resource]['items'])==expected
         enrollments_before,_ = call('/api/enrollments',token=token)
-        assert len(enrollments_before['items'])==2
+        assert len(enrollments_before['items'])==4
         staff_before = {}
         for resource in ('members','assignments','assignment-endings'):
             staff_before[resource],_ = call('/api/staff/'+resource,token=token)
@@ -124,14 +125,15 @@ with tempfile.TemporaryDirectory(prefix='alfa-check-') as temporary:
         run('exec','-T','postgres','pg_restore','-U','postgres','--exit-on-error','-d','restore_probe',input=dump)
         count = run('exec','-T','postgres','psql','-U','postgres','-d','restore_probe','-Atc',
                     'SELECT count(*) FROM class_groups;',capture_output=True,text=True).stdout.strip()
-        assert count=='4'
-        for table, expected in (('students','3'),('guardians','2'),('student_guardians','2'),('enrollments','2'),('enrollment_events','1'),
+        assert count=='6'
+        for table, expected in (('students','5'),('guardians','3'),('student_guardians','4'),('enrollments','4'),('enrollment_events','1'),
                                 ('staff_members','1'),('class_group_staff','1'),('class_group_staff_endings','1'),('staff_events','3'),
                                 ('school_site_addresses','1'),('school_site_versions','1'),('visit_slots','1'),('admission_leads','1'),
                                 ('visit_bookings','1'),('visit_booking_outcomes','1'),('admission_lead_updates','1'),('admission_events','4'),
                                 ('enrollment_form_settings','1'),('online_enrollments','1'),('online_enrollment_links','1'),
                                 ('online_enrollment_access_attempts','5'),('online_enrollment_submissions','1'),
-                                ('online_enrollment_reviews','1'),('online_enrollment_events','4')):
+                                ('online_enrollment_reviews','1'),('online_enrollment_events','5'),
+                                ('online_enrollment_birth_date_corrections','1'),('people_imports','1')):
             count = run('exec','-T','postgres','psql','-U','postgres','-d','restore_probe','-Atc',
                         f'SELECT count(*) FROM {table};',capture_output=True,text=True).stdout.strip()
             assert count==expected

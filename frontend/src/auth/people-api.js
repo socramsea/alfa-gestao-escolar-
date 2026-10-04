@@ -11,7 +11,7 @@ export async function peopleRequest(token, path, options = {}) {
       401: 'Sessão expirada. Entre novamente.', 403: 'Seu perfil não pode realizar esta operação.',
       404: 'Uma referência não está disponível para sua escola.', 409: 'Esse vínculo já existe, ou o reenvio conflita com a solicitação anterior.' };
     const error = new Error(messages[response.status] || 'Não foi possível concluir a operação. Tente novamente.');
-    error.status = response.status; throw error;
+    error.status = response.status; error.body = data; throw error;
   }
   if (!data || typeof data !== 'object') throw new Error('Resposta inválida do servidor.');
   return data;
