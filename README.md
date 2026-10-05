@@ -22,6 +22,7 @@ docs/       Roteiro, visão do produto, arquitetura, entregas e decisões
 ## Executar e testar
 
 - **No ar, num servidor com HTTPS:** siga [`deploy/NO-AR.md`](deploy/NO-AR.md).
+- **No ar a partir do seu computador, por um túnel com HTTPS:** siga [`deploy/NO-AR-COMPUTADOR.md`](deploy/NO-AR-COMPUTADOR.md).
 - **Piloto completo com Docker:** siga [`deploy/README.md`](deploy/README.md).
 - **Desenvolvimento:**
   - PostgreSQL local em `127.0.0.1:5433` com `docker compose up -d`, após definir `POSTGRES_PASSWORD` a partir de `.env.example`.

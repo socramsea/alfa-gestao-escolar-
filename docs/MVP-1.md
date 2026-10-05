@@ -43,54 +43,24 @@ Fica para o MVP 2 ou depois, conforme o [roteiro](ROTEIRO.md):
 | 12 | Cada ação registra data, usuário e histórico | Atendido |
 | 13 | Os testes automatizados passam, inclusive o teste completo com Docker | Parcial: falta o teste com Docker |
 | 14 | Nenhum dado real é usado | Atendido até aqui |
-| 15 | O sistema está no ar, com HTTPS, e os participantes entram com as próprias contas | Falta (entrega 8) |
+| 15 | O sistema está no ar, com HTTPS, e os participantes entram com as próprias contas | Falta (entrega 8): na reunião, pelo túnel a partir do computador do responsável |
 | 16 | O responsável pelo projeto percorre o caminho no ar e aprova | Falta |
 
 ## Antes do passo a passo
 
-Para a reunião, o sistema roda num servidor com HTTPS: siga [`deploy/NO-AR.md`](../deploy/NO-AR.md). Os passos abaixo são para a sua máquina.
+Ainda não há servidor. A reunião roda no piloto do computador do responsável, acessível pela internet por um túnel com HTTPS: siga [`deploy/NO-AR-COMPUTADOR.md`](../deploy/NO-AR-COMPUTADOR.md). Ele inclui, nesta ordem:
 
-Faça na sua máquina, no terminal, nesta ordem.
+1. Atualizar a pasta do projeto com `git pull`.
+2. Rodar o teste completo com Docker (`GATE_BROWSER=1 npm run test:gate`, em `backend/`). Ele usa um banco temporário e não mexe no piloto.
+3. Atualizar o piloto com `bash deploy/piloto/atualizar.sh`. O script faz o backup antes e aplica as migrations 008 a 012 sem apagar os cadastros.
+4. Criar a escola da reunião e as contas dos participantes.
+5. Abrir o túnel com `bash deploy/piloto/tunel.sh`.
 
-### 1. Atualizar a pasta do projeto
-
-```bash
-cd ~/alfa-gestao-escolar
-git checkout main
-git pull
-```
-
-### 2. Rodar o teste completo com Docker
-
-```bash
-cd ~/alfa-gestao-escolar/frontend && npm ci
-cd ~/alfa-gestao-escolar/backend && npm ci
-GATE_BROWSER=1 npm run test:gate
-```
-
-Ele cria um banco temporário, roda todos os testes e apaga o que criou. Não mexe no piloto. Deve terminar sem falhas. Se falhar, ou se reclamar que não achou o Chrome, envie a saída para o Claude.
-
-### 3. Atualizar o piloto, com backup antes
-
-O piloto da sua máquina está na entrega 4. A atualização aplica as migrations 008 a 011 sem apagar os cadastros que já existem.
-
-```bash
-cd ~/alfa-gestao-escolar
-P="docker compose --env-file deploy/.env.piloto -p alfa-piloto-local -f deploy/compose.yml -f deploy/compose.piloto.yml"
-$P up -d --wait postgres
-install -d -m 700 deploy/backups
-$P exec -T postgres pg_dump -U postgres -Fc alfa_gestao > deploy/backups/piloto-antes-mvp1.dump
-$P stop api frontend
-$P --profile setup build
-$P --profile setup run --rm setup
-$P up -d --wait postgres api frontend
-```
-
-Confira se o arquivo `deploy/backups/piloto-antes-mvp1.dump` foi criado e não está vazio antes de seguir. Se algum comando falhar, pare e envie a saída para o Claude. O backup permite voltar ao estado anterior.
+Quando houver servidor, o caminho é o [`deploy/NO-AR.md`](../deploy/NO-AR.md).
 
 ## Passo a passo de demonstração
 
-- **Onde:** abra o endereço do servidor ([`deploy/NO-AR.md`](../deploy/NO-AR.md)) ou o piloto local em `http://127.0.0.1:8088` ([`deploy/PILOTO-LOCAL.md`](../deploy/PILOTO-LOCAL.md)), e entre com o acesso de administrador.
+- **Onde:** abra o endereço da reunião, mostrado por `bash deploy/piloto/tunel.sh` ([`deploy/NO-AR-COMPUTADOR.md`](../deploy/NO-AR-COMPUTADOR.md)), e entre com o acesso da escola da reunião. Use esse endereço também no seu computador: os links da matrícula e do site saem com o endereço aberto no navegador.
 - **Dados:** use só dados fictícios.
 - **Família:** faça a parte dela numa janela anônima ou no celular.
 - **Registro:** marque cada passo que funcionou e anote tudo o que estranhar, mesmo que pareça pequeno.
@@ -102,11 +72,11 @@ Confira se o arquivo `deploy/backups/piloto-antes-mvp1.dump` foi criado e não e
 ### 2. A família conhece a escola
 
 - [ ] Em **Captação**, aba **Site da escola**:
-  - defina o endereço `escola-piloto`, se ainda não houver;
-  - preencha o título, uma turma oferecida e uma peça de uniforme;
+  - confira o endereço do site. A escola criada para a reunião já vem com o endereço e o site publicado, por exemplo `escola-alfa-reis-demonstracao`. Se não houver, defina `escola-piloto`;
+  - preencha ou ajuste o título, uma turma oferecida e uma peça de uniforme;
   - clique em **Salvar e publicar**.
-- [ ] Na aba **Visitas**, deixe um dia da semana marcado, horário `09:00`, uma semana e uma família por horário, e clique em **Abrir horários**.
-- [ ] **Como família**, abra `http://127.0.0.1:8088/escola/escola-piloto`:
+- [ ] Na aba **Visitas**, confira os horários já abertos. Para abrir mais, deixe um dia da semana marcado, horário `09:00`, uma semana e uma família por horário, e clique em **Abrir horários**.
+- [ ] **Como família**, abra o endereço da reunião seguido de `/escola/` e do endereço do site, por exemplo `…/escola/escola-alfa-reis-demonstracao`:
   - confira as turmas e o uniforme;
   - escolha **Agendar visita** e um horário;
   - preencha seu nome, o WhatsApp, o nome da criança e a **data de nascimento**;
