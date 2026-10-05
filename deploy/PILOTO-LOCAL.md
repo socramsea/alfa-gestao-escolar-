@@ -5,6 +5,8 @@ Escola fictícia: Escola Piloto Local.
 E-mail: admin@piloto.test.
 Senha: consultar o arquivo local protegido `.env.piloto-acesso`. Não compartilhar esse arquivo.
 
+Para atualizar o piloto para a versão do `main`, com backup antes: `bash deploy/piloto/atualizar.sh`. Para abri-lo pela internet numa reunião: [`NO-AR-COMPUTADOR.md`](NO-AR-COMPUTADOR.md).
+
 Use somente dados fictícios. O projeto Compose `alfa-piloto-local` usa o volume próprio `alfa-piloto-local_mvpdata`. Não altera o banco existente em 5433. Os containers não iniciam automaticamente com o computador.
 
 ## Roteiro manual

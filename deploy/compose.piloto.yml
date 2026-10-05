@@ -3,5 +3,10 @@ services:
     restart: "no"
   api:
     restart: "no"
+    environment:
+      # Aberto por túnel (deploy/piloto/tunel.sh), todo acesso chega do mesmo endereço: o limite por
+      # origem vira um teto geral. Para uma reunião com várias pessoas, o teto da API é maior no piloto.
+      PUBLIC_LEADS_PER_WINDOW: "200"
+      FAMILY_REQUESTS_PER_WINDOW: "600"
   frontend:
     restart: "no"

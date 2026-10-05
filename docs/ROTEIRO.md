@@ -18,14 +18,15 @@ Até o MVP 1, o caminho tem começo, meio e fim:
 | Quando | O que | Quem |
 |---|---|---|
 | Dom 04, noite | Importação de planilha pronta e no `main` (entrega 7) | Claude |
-| Dom 04, noite | Decidido: VPS na Hostinger, no Brasil, e domínio próprio. Falta enviar os títulos das colunas da planilha da escola, sem dados | Responsável |
-| Dom 04, noite | Guia e scripts para colocar no ar ([`deploy/NO-AR.md`](../deploy/NO-AR.md)) | Claude |
-| Seg 05, manhã | Teste completo com Docker na máquina do responsável | Responsável; Claude corrige se falhar |
-| Seg 05 | Criar o servidor e o domínio, colocar no ar e criar as contas dos participantes | Responsável, com o guia |
-| Seg 05, tarde | Ensaio do passo a passo do [MVP 1](MVP-1.md) no ar | Claude e responsável |
-| Seg 05, 18h | Congelamento: depois disso, só correção | — |
-| Ter 06, manhã | Checagem final e plano B: piloto local e capturas de tela | Responsável e Claude |
+| Dom 04, noite | Guia e scripts para colocar no ar numa VPS ([`deploy/NO-AR.md`](../deploy/NO-AR.md)) | Claude |
+| Seg 05 | Sem servidor contratado a tempo. A reunião roda no piloto do computador do responsável (Pop!_OS), aberto pela internet por um túnel com HTTPS: guia e scripts em [`deploy/NO-AR-COMPUTADOR.md`](../deploy/NO-AR-COMPUTADOR.md) | Claude |
+| Seg 05 | Falta enviar os títulos das colunas da planilha da escola, sem dados, e decidir entre conta compartilhada ou uma escola por participante | Responsável |
+| Seg 05 | Teste completo com Docker, atualização do piloto, escola da reunião e contas dos participantes | Responsável, com o guia; Claude corrige se falhar |
+| Seg 05, noite | Ensaio do passo a passo do [MVP 1](MVP-1.md) pelo endereço do túnel, de um celular fora do Wi-Fi | Responsável e Claude |
+| Seg 05, noite | Congelamento: depois disso, só correção | — |
+| Ter 06, 17h | Túnel aberto, endereço conferido no celular e enviado aos participantes; plano B: piloto local e capturas de tela | Responsável |
 | Ter 06, 18h | Reunião e aceite do MVP 1 | Responsável |
+| Depois da reunião | Servidor próprio (VPS) com o guia [`deploy/NO-AR.md`](../deploy/NO-AR.md), para o sistema ficar no ar sem depender do computador | Responsável e Claude |
 
 ## Linha oficial
 
@@ -52,8 +53,8 @@ O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da ado�
 | 5 | [Site da escola, pré-matrícula e captação](architecture/entrega-5-site-e-captacao.md) | Meio | No `main` ([PR #1](https://github.com/socramsea/alfa-gestao-escolar-/pull/1)) |
 | 6 | [Matrícula online de aluno novo pela família](architecture/entrega-6-matricula-online.md) | Meio | No `main` ([PR #4](https://github.com/socramsea/alfa-gestao-escolar-/pull/4)) |
 | 6.1 | [Correções de lógica da captação e da matrícula online](architecture/entrega-6-matricula-online.md#correções-após-revisão-2026-10-04) | Meio | No `main` ([PR #2](https://github.com/socramsea/alfa-gestao-escolar-/pull/2)) |
-| 7 | [Importação de planilha](architecture/entrega-7-importacao-planilha.md): alunos, responsáveis, vínculos e matrículas a partir da lista da escola | Meio | Em revisão |
-| 8 | **No ar e aceite do MVP 1:** teste completo com Docker, sistema online com HTTPS ([guia](../deploy/NO-AR.md)), contas de demonstração e [passo a passo de demonstração](MVP-1.md#passo-a-passo-de-demonstração) aprovado pelo responsável | Fim do MVP 1 | **Em andamento**, até 06/10 às 18h |
+| 7 | [Importação de planilha](architecture/entrega-7-importacao-planilha.md): alunos, responsáveis, vínculos e matrículas a partir da lista da escola | Meio | No `main` ([PR #6](https://github.com/socramsea/alfa-gestao-escolar-/pull/6)) |
+| 8 | **No ar e aceite do MVP 1:** teste completo com Docker, sistema online com HTTPS (na reunião, a partir do computador do responsável por um túnel, [guia](../deploy/NO-AR-COMPUTADOR.md); depois, numa VPS, [guia](../deploy/NO-AR.md)), contas de demonstração e [passo a passo de demonstração](MVP-1.md#passo-a-passo-de-demonstração) aprovado pelo responsável | Fim do MVP 1 | **Em andamento**, até 06/10 às 18h |
 | 9 | Renovação de matrícula: abertura do período, prévia, confirmação pela família, análise e aprovação, matrícula do novo ano, histórico | MVP 2 | Proposta; depende das decisões 1 e 2 |
 | 10 | Perfis e permissões: secretaria sem acesso administrativo total e, se for a decisão, conta do responsável | MVP 2 | Proposta; depende da decisão 2 |
 | 11 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |

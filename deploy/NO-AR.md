@@ -2,6 +2,8 @@
 
 Guia da entrega 8 do [roteiro](../docs/ROTEIRO.md): o Alfa Gestão Escolar num servidor, com HTTPS, para a reunião de 06/10 às 18h. A primeira vez leva de 40 a 60 minutos; a maior parte é a montagem automática das imagens.
 
+**Ainda sem servidor?** Faça a reunião a partir do seu computador: [`NO-AR-COMPUTADOR.md`](NO-AR-COMPUTADOR.md).
+
 **Só dados fictícios.** Este servidor é de demonstração. A planilha real de uma escola só entra depois dos critérios de produção ([ADR-005](../docs/decisoes/ADR-005-importacao-de-planilha.md)).
 
 ## 1. Contratar a VPS na Hostinger
