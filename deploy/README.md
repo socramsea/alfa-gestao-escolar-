@@ -86,10 +86,13 @@ Sem HTTPS fora de localhost, recursos de segurança do navegador e proteção do
 token/senha não estão garantidos. DNS, certificado e firewall precisam de verificação
 no destino antes de acesso público.
 
-O Nginx limita login por endereço observado: 10 requisições/minuto com rajada
-de 10. Se houver proxy externo, ele pode representar todos os clientes como um
-IP só. Configure IP real apenas para proxies explicitamente confiáveis ou aplique
-a limitação por cliente no proxy externo; nunca confie livremente em X-Forwarded-For.
+O Nginx limita login por visitante: 10 requisições/minuto com rajada de 10.
+O IP do visitante vem do `X-Forwarded-For` escrito pelo proxy HTTPS do servidor
+(Caddy) ou pelo túnel (cloudflared), e só é aceito de endereços privados e do
+loopback, que só existem porque a porta é publicada em `127.0.0.1`
+([ADR-006](../docs/decisoes/ADR-006-ip-real-nos-limites-do-nginx.md)). Não publique
+a porta do nginx em outra interface e não use proxy que repasse o `X-Forwarded-For`
+do visitante sem acrescentar o IP de quem conectou.
 
 A API recebe somente credenciais `alfa_app`, `alfa_auth` e JWT; não recebe a senha
 administrativa do banco. API e frontend rodam com filesystem somente leitura,

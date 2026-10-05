@@ -20,6 +20,7 @@ Até o MVP 1, o caminho tem começo, meio e fim:
 | Dom 04, noite | Importação de planilha pronta e no `main` (entrega 7) | Claude |
 | Dom 04, noite | Guia e scripts para colocar no ar numa VPS ([`deploy/NO-AR.md`](../deploy/NO-AR.md)) | Claude |
 | Seg 05 | Sem servidor contratado a tempo. A reunião roda no piloto do computador do responsável (Pop!_OS), aberto pela internet por um túnel com HTTPS: guia e scripts em [`deploy/NO-AR-COMPUTADOR.md`](../deploy/NO-AR-COMPUTADOR.md) | Claude |
+| Seg 05 | Limites do nginx (login, pré-matrícula e família) contados por visitante atrás do Caddy ou do túnel ([ADR-006](decisoes/ADR-006-ip-real-nos-limites-do-nginx.md)) | Claude |
 | Seg 05 | Falta enviar os títulos das colunas da planilha da escola, sem dados, e decidir entre conta compartilhada ou uma escola por participante | Responsável |
 | Seg 05 | Teste completo com Docker, atualização do piloto, escola da reunião e contas dos participantes | Responsável, com o guia; Claude corrige se falhar |
 | Seg 05, noite | Ensaio do passo a passo do [MVP 1](MVP-1.md) pelo endereço do túnel, de um celular fora do Wi-Fi | Responsável e Claude |
@@ -102,11 +103,12 @@ Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-crit�
 
 Cada uma vira um ADR quando for tomada. As três primeiras só são necessárias para o MVP 2.
 
-Já decididas em 2026-10-04:
+Já decididas em 2026-10-04 e 2026-10-05:
 - as 7 decisões propostas da entrega 5;
 - a revisão da decisão 3 da entrega 6: dados da ficha no cadastro (PR #2);
 - o MVP em duas etapas ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md));
-- a importação de planilha no MVP 1 ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md)).
+- a importação de planilha no MVP 1 ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md));
+- o IP real do visitante nos limites do nginx ([ADR-006](decisoes/ADR-006-ip-real-nos-limites-do-nginx.md)).
 
 1. **Acesso do responsável na renovação:** pelo link pessoal com a data de nascimento, como na matrícula online, ou por conta própria. Define o desenho das entregas 9 e 10.
 2. **Perfis:** quais papéis existem além do administrador (secretaria, direção, coordenação…) e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
@@ -118,7 +120,7 @@ Já decididas em 2026-10-04:
 1. **O `main` é a fonte da verdade.** O que não está no `main` não está pronto.
 2. **Uma entrega por vez.** Cada entrega sai de uma branch criada a partir do `main` atualizado e vira um PR para o `main`. A próxima só começa depois que a anterior foi mesclada. Correções da mesma entrega podem ir no mesmo PR.
 3. **Nada fora do roteiro.** Começar algo que não está aqui exige primeiro um PR que atualize este roteiro. Mudança de escopo, de ordem ou de regra de segurança exige também um ADR, como manda o [controle de mudanças](visao-negocio-e-arquitetura-do-mvp.md#14-controle-de-mudanças).
-4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 006.
+4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 007.
 5. **Definição de pronto:**
    - testes do backend, do frontend e do navegador passando;
    - documento da entrega em `docs/architecture/entrega-N-*.md`, com o que foi feito e como foi validado;
