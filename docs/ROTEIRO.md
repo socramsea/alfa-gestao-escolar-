@@ -58,7 +58,7 @@ O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da ado�
 | 7 | [Importação de planilha](architecture/entrega-7-importacao-planilha.md): alunos, responsáveis, vínculos e matrículas a partir da lista da escola | Meio | No `main` ([PR #6](https://github.com/socramsea/alfa-gestao-escolar-/pull/6)) |
 | 8 | **No ar e aceite do MVP 1:** teste completo com Docker, sistema online com HTTPS (na reunião, a partir do computador do responsável por um túnel, [guia](../deploy/NO-AR-COMPUTADOR.md); depois, numa VPS, [guia](../deploy/NO-AR.md)), contas de demonstração e [passo a passo de demonstração](MVP-1.md#passo-a-passo-de-demonstração) aprovado pelo responsável | Fim do MVP 1 | **Em andamento**, até 06/10 às 18h |
 | 9 | [Notas e avaliações](architecture/entrega-9-notas-avaliacoes.md): tipos de avaliação, avaliações da turma, lançamento em lote, média ponderada, correção com histórico e evento `nota_lancada` ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)) | MVP 2 | Em revisão ([PR #11](https://github.com/socramsea/alfa-gestao-escolar-/pull/11)); mescla depois do aceite do MVP 1 |
-| 10 | Renovação de matrícula: abertura do período, prévia, confirmação pela família, análise e aprovação, matrícula do novo ano, histórico | MVP 2 | Proposta; depende das decisões 1 e 2 |
+| 10 | Renovação de matrícula: abertura do período, prévia, confirmação pela família, análise e aprovação, matrícula do novo ano, histórico | MVP 2 | Decidida ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md)): família pelo link pessoal, sem conta; administrador e responsável. Começa depois que o PR #11 for mesclado |
 | 11 | Perfis e permissões: secretaria sem acesso administrativo total e, se for a decisão, conta do responsável | MVP 2 | Proposta; depende da decisão 2 |
 | 12 | Frequência: chamada por turma e dia pelo professor, presença como padrão, justificativa em até 5 dias úteis e alerta à coordenação abaixo de 75% ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)) | MVP 2 | Decidida; depende da entrega 11 (conta de professor) |
 | 13 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |
@@ -102,7 +102,7 @@ Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-crit�
 | Login e autenticação | Atendido |
 | Usuários e permissões validados | Parcial: só administrador da escola e da plataforma (entrega 11) |
 | Dados isolados por `school_id` | Atendido |
-| Responsável acessa somente seus próprios alunos | Falta (entregas 10 e 11) |
+| Responsável acessa somente seus próprios alunos | Falta (entrega 10, pelo link pessoal, como no MVP 1) |
 | Secretaria cadastra aluno e responsável | Parcial: só com perfil de administrador (entrega 11); também por planilha (entrega 7) |
 | Vínculo aluno-responsável | Atendido |
 | Turma e período configuráveis | Atendido |
@@ -127,10 +127,13 @@ Já decididas de 2026-10-04 a 2026-10-06:
 - a importação de planilha no MVP 1 ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md));
 - o IP real do visitante nos limites do nginx ([ADR-006](decisoes/ADR-006-ip-real-nos-limites-do-nginx.md));
 - notas e avaliações como entrega 9, no MVP 2, com renumeração das seguintes ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md));
-- frequência como entrega 12, no MVP 2, e mensagens (Z-API), documentos e assinatura (ZapSign) e comunicações depois do MVP 2, com risco aceito da conexão não oficial da Z-API e as regras de LGPD, consentimento, credenciais, armazenamento, frequência e processamento de eventos ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)).
+- frequência como entrega 12, no MVP 2, e mensagens (Z-API), documentos e assinatura (ZapSign) e comunicações depois do MVP 2, com risco aceito da conexão não oficial da Z-API e as regras de LGPD, consentimento, credenciais, armazenamento, frequência e processamento de eventos ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md));
+- na renovação, acesso da família pelo link pessoal, sem conta, e perfis administrador e responsável; professor e coordenação na entrega 11 ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md)).
 
-1. **Acesso do responsável na renovação:** pelo link pessoal com a data de nascimento, como na matrícula online, ou por conta própria. Define o desenho das entregas 10 e 11.
-2. **Perfis:** quais papéis existem além do administrador (secretaria, direção, coordenação…) e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
+1. **Acesso do responsável na renovação:** **decidida em 06/10** ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md)). O acesso é pelo link pessoal com a data de nascimento, como na matrícula online, sem conta própria.
+2. **Perfis:** quais papéis existem além do administrador e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
+    - **Para a entrega 10, decidida** ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md)): administrador, que é a secretaria ou a direção, e responsável pelo link.
+    - **Falta para a entrega 11:** professor, coordenação e o que cada um faz.
 3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 13).
 4. **Recusa da escola na captação:** hoje aparece como "desistiu", misturando recusa da escola com desistência da família.
 
@@ -139,7 +142,7 @@ Já decididas de 2026-10-04 a 2026-10-06:
 1. **O `main` é a fonte da verdade.** O que não está no `main` não está pronto.
 2. **Uma entrega por vez.** Cada entrega sai de uma branch criada a partir do `main` atualizado e vira um PR para o `main`. A próxima só começa depois que a anterior foi mesclada. Correções da mesma entrega podem ir no mesmo PR.
 3. **Nada fora do roteiro.** Começar algo que não está aqui exige primeiro um PR que atualize este roteiro. Mudança de escopo, de ordem ou de regra de segurança exige também um ADR, como manda o [controle de mudanças](visao-negocio-e-arquitetura-do-mvp.md#14-controle-de-mudanças).
-4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 009.
+4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 010.
 5. **Definição de pronto:**
    - testes do backend, do frontend e do navegador passando;
    - documento da entrega em `docs/architecture/entrega-N-*.md`, com o que foi feito e como foi validado;
