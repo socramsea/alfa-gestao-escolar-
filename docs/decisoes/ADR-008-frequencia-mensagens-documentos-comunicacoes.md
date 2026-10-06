@@ -1,6 +1,6 @@
 # ADR-008 — Frequência, mensagens, documentos e comunicações no roteiro
 
-Status: **PROPOSTA**, por pedido do responsável pelo projeto em 2026-10-06. Ainda não muda o roteiro: as entregas só ganham número quando esta proposta for aceita.
+Status: **ACEITO** pelo responsável pelo projeto em 2026-10-06. Proposto e aceito no mesmo dia, com as decisões abaixo.
 
 ## Contexto
 
@@ -8,56 +8,89 @@ O responsável pediu que quatro módulos entrem no roteiro, nesta ordem:
 
 1. **Frequência:** presença e falta dos alunos por turma e por dia.
 2. **Mensagens:** envio de WhatsApp às famílias pela Z-API.
-3. **Documentos e assinatura:** documentos do aluno e do contrato, com assinatura eletrônica pela TapSign.
+3. **Documentos e assinatura:** documentos do aluno e do contrato, com assinatura eletrônica pela [ZapSign](https://zapsign.com.br).
 4. **Comunicações:** comunicados da escola às famílias.
 
-Hoje o roteiro termina o MVP 2 na entrega 13 (aceite) e deixa para depois "o restante do pedagógico, financeiro e produção" ([ADR-007](ADR-007-notas-e-avaliacoes-na-entrega-9.md)).
-
 Três regras da [visão do produto](../visao-negocio-e-arquitetura-do-mvp.md) pesam sobre a posição:
-- **Integrações reais não são ativadas no MVP inicial.** A Z-API e a TapSign são integrações reais.
-- **Upload real de documentos só depois de armazenamento privado e controle de acesso prontos.**
-- **Nenhum dado real antes dos critérios de produção e da aprovação formal da escola.** Mandar WhatsApp a uma família real é usar dado real.
+- integrações reais não são ativadas no MVP inicial, e a Z-API e a ZapSign são integrações reais;
+- upload real de documentos só depois de armazenamento privado e controle de acesso prontos;
+- nenhum dado real antes dos critérios de produção e da aprovação formal da escola.
 
-## Proposta
+Os detalhes das duas integrações estão em [`docs/architecture/integracoes-zapi-zapsign.md`](../architecture/integracoes-zapi-zapsign.md).
 
-**Os quatro módulos formam uma etapa nova, depois do aceite do MVP 2 (entrega 13) e antes do financeiro, na ordem pedida.** O nome sugerido é "MVP 3 — rotina escolar e famílias".
+## Decisão
 
-| Ordem | Módulo | Depende de | Pronto quando |
-|---|---|---|---|
-| 1 | Frequência | Turmas, matrículas e o perfil de professor (entrega 11) | Chamada por turma e dia, faltas por aluno, só inserção com correção como em notas, evento `falta_registrada` no canal interno |
-| 2 | Mensagens (Z-API) | Servidor próprio com HTTPS, contrato com o fornecedor, consentimento das famílias, consumidor de `outbox_events` | Envio a partir dos eventos (`nota_lancada`, `falta_registrada`) e de modelos aprovados pela escola. Registro de entrega e falha, com nova tentativa. Saída com números de teste até a aprovação de produção |
-| 3 | Documentos e assinatura (TapSign) | Armazenamento privado com controle de acesso, Mensagens para enviar o link de assinatura, contrato com o fornecedor | Documentos por aluno com versão, autor e retenção. Contrato enviado para assinatura, com o retorno do fornecedor registrado |
-| 4 | Comunicações | Mensagens, perfis e a decisão 1 do roteiro (acesso do responsável) | Comunicado por escola, turma ou aluno, com destinatários, leitura registrada e envio por Mensagens |
+### 1. Posição e ordem
 
-**Por que nesta posição:**
-- **Antes, dentro do MVP 2**, os quatro módulos atrasariam a renovação, que é o MVP original da visão. Também trariam integrações reais para dentro do MVP, contra a regra da visão.
-- **A frequência vem depois dos perfis.** A chamada é diária e feita pelo professor, e lançar pela secretaria, como nas notas, não serve para o dia a dia.
-- **Mensagens vem logo depois da frequência.** Ela é o canal dos módulos seguintes e o primeiro consumidor dos eventos que notas e frequência já gravam.
-- **Mensagens e assinatura precisam de servidor próprio.** Os retornos dos fornecedores (webhooks) não funcionam pelo túnel temporário. Por isso a VPS ([`deploy/NO-AR.md`](../../deploy/NO-AR.md)) é pré-requisito.
-- **Documentos vem antes de comunicações.** O link de assinatura é a primeira mensagem com prazo e resposta, e o comunicado reaproveita o envio e o registro de leitura.
+A ordem é: frequência, mensagens, documentos e assinatura, comunicações.
 
-**Alternativa, se a escola precisar da frequência antes:** a frequência pode entrar logo depois da entrega 11 (perfis), ainda no MVP 2, sem integrações. Os outros três continuam depois do aceite do MVP 2.
+| Módulo | Onde entra | Por quê |
+|---|---|---|
+| Frequência | **No MVP 2, como entrega 12**, logo depois dos perfis (entrega 11) | Não usa fornecedor externo. A chamada é diária e feita pelo professor, por isso depende da conta de professor |
+| Mensagens (Z-API) | **Depois do aceite do MVP 2** | Integração real. Precisa de servidor próprio com HTTPS |
+| Documentos e assinatura (ZapSign) | Depois de Mensagens | Integração real. Precisa de armazenamento privado e do servidor próprio. O link de assinatura vai pela própria ZapSign, que envia por WhatsApp |
+| Comunicações | Depois de Documentos | Usa o envio e o registro de Mensagens |
 
-## O que fica para decidir ao aceitar
+- **Por que a frequência é a entrega 12, e não 11.5:** números decimais ficam para correções da mesma entrega, como a 6.1. A correção de registros passa a ser a 13 e o aceite do MVP 2 a 14.
+- **Os três módulos de depois do MVP 2 ainda não têm número.** Cada um ganha o seu ao entrar no roteiro, antes de começar.
+- **O servidor próprio (VPS) é pré-requisito de Mensagens.** Os retornos dos fornecedores (webhooks) não funcionam pelo túnel temporário.
 
-Cada item vira um ADR próprio antes da entrega correspondente:
+### 2. Fornecedor de assinatura: ZapSign
 
-1. **Fornecedor de WhatsApp.**
-   - A confirmar: a Z-API conecta um número por QR code, fora da API oficial do WhatsApp Business.
-   - Avaliar o risco de bloqueio do número e os termos de uso.
-   - Comparar com a API oficial (Cloud API), direto ou por um provedor.
-2. **Fornecedor de assinatura.**
-   - Confirmar o nome: a ZapSign é uma plataforma brasileira conhecida de assinatura eletrônica.
-   - Confirmar o tipo de assinatura aceito para o contrato da escola.
-3. **LGPD com fornecedores:** contrato de operador de dados, quais dados saem para cada fornecedor e por quanto tempo ficam lá.
-4. **Consentimento e descadastro:** como a família aceita receber mensagens e como deixa de receber.
-5. **Credenciais:** onde ficam os tokens dos fornecedores e se cada escola tem a sua conta ou a plataforma tem uma só.
-6. **Armazenamento de documentos:** no banco, como as fotos do site, ou em armazenamento de objetos privado; retenção e exclusão.
-7. **Frequência:** chamada por dia ou por aula; limite de faltas e alerta; justificativa de falta.
-8. **Consumidor do canal interno:** um processo separado da API, com papel próprio no banco, que lê `outbox_events` de todas as escolas sem quebrar o isolamento das telas.
+O fornecedor é a ZapSign, não a "TapSign" da versão anterior deste ADR.
+
+- **Plano para o piloto:** 1 escola, cerca de 500 alunos e cerca de 20 matrículas por mês.
+  - Plano Equipe: R$ 49,90 por mês, no pagamento anual, com 20 documentos por mês, API e envio por WhatsApp ilimitado.
+  - Se passar de 20 documentos por mês, o plano de 80 documentos sai a R$ 99,90 por mês.
+- **Recursos usados:**
+  - API REST: criar o documento, enviar e acompanhar;
+  - envio do link de assinatura por WhatsApp, incluído no plano Equipe (fora dele, R$ 0,50 por envio);
+  - webhook de status;
+  - assinatura na tela, com o dedo no celular, sem cadastro;
+  - modelos e formulários.
+
+Os valores foram informados pelo responsável em 2026-10-06 e devem ser conferidos no site na contratação.
+
+### 3. Fornecedor de WhatsApp: Z-API, com risco aceito
+
+**Risco aceito: conexão não oficial.** A Z-API conecta um número de WhatsApp por QR code, fora da API oficial do WhatsApp Business, e o número pode ser banido.
+
+**Mitigação: uso transacional, limite diário e envio isolado para uma futura migração.**
+- **Só notificação transacional:** nota, falta e documento. Nada de marketing em massa.
+- **No máximo 5 mensagens por pessoa por dia.**
+- **A família pode responder ao número:** a conversa vai nos dois sentidos, o que distingue o número de um disparador de spam.
+- **Plano de troca:** se o número for banido, outro número entra em até 1 dia, reconectado na Z-API.
+- **Migração futura para a API oficial da Meta:** troca só o despachante de mensagens, que fica isolado do resto do sistema.
+
+### 4. Implantação
+
+| Ponto | Decisão |
+|---|---|
+| LGPD com fornecedores | Cada fornecedor assina um contrato de tratamento de dados (DPA). A Z-API e a ZapSign têm o seu; a escola solicita e assina os dois antes do primeiro envio real |
+| Consentimento da família | Checkbox na pré-matrícula e cláusula no contrato de matrícula: "A família autoriza receber comunicações educacionais por WhatsApp no número informado." |
+| Credenciais | Tokens dos fornecedores em variáveis de ambiente (`.env`) no servidor, nunca no código. Rotação semestral |
+| Armazenamento de documentos | Disco do servidor, no volume Docker `/data/uploads/`. No futuro, MinIO ou S3. O armazenamento da Z-API não é o principal, porque os arquivos lá expiram em 30 dias |
+| Frequência | O padrão é presente; o professor marca só a falta. A justificativa pode vir depois, em até 5 dias úteis. Frequência abaixo de 75% gera alerta para a coordenação |
+| Processamento dos eventos | Um processo interno da aplicação (`setInterval` de 5 segundos) consulta os eventos pendentes da tabela de saída (`outbox_events`) e os processa. Sem fila externa (RabbitMQ, Redis) no MVP |
 
 ## Consequências
 
-- Ao aceitar, o roteiro ganha a etapa nova com as entregas numeradas depois do aceite do MVP 2, e o financeiro passa para depois dela.
-- Enquanto for proposta, nada muda nas entregas 9 a 13.
-- O próximo ADR livre passa a ser o 009.
+- O roteiro ganha a frequência como entrega 12 no MVP 2. A correção de registros passa a 13, e o aceite do MVP 2 a 14.
+- Mensagens, documentos e comunicações ficam listados depois do MVP 2, nessa ordem e sem número.
+- **Pré-requisitos antes da entrega de Mensagens:**
+  - servidor próprio com domínio e HTTPS;
+  - os dois DPAs assinados;
+  - consentimento registrado.
+  
+  Até a aprovação de produção, os envios vão só para números de teste da equipe.
+- **Pontos de desenho que ficam para as entregas, sem mudar estas decisões:**
+  - **Envios em tabela própria:** como o sistema só insere, o resultado de cada envio vai para uma tabela nova, com tentativas e status, e `outbox_events` não é alterada.
+  - **Leitura dos eventos de todas as escolas:** o processo que lê os eventos precisa de um papel no banco ou de uma função própria, sem quebrar o isolamento das telas.
+  - **Um processo por vez:** uma trava no banco garante que só um processo trate os eventos.
+  - **Limite de 5 por dia:** conferido por telefone antes de cada envio.
+  - **Arquivos no disco:** a API hoje roda com sistema de arquivos só de leitura. O volume `/data/uploads/` precisa ser montado como gravável, fora da pasta servida pelo nginx. O backup passa a incluir esse volume, além do `pg_dump`.
+  - **Webhooks:** autenticados por segredo do fornecedor.
+  - **Respostas das famílias:** quem lê as respostas que chegam ao número fica para a entrega de Mensagens.
+  - **Revogação do consentimento:** como a família deixa de receber fica para a entrega de Mensagens. A LGPD exige que a revogação seja possível.
+- **A escola confirma com o jurídico** que a assinatura eletrônica na tela vale para o contrato de matrícula.
+- O próximo ADR livre continua sendo o 009.

@@ -5,7 +5,7 @@ Este é o único roteiro vigente do Alfa Gestão Escolar ([ADR-003](decisoes/ADR
 O MVP sai em duas etapas ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md)):
 
 - **MVP 1, matrícula sem papel da unidade nova:** do site da escola até o aluno matriculado na turma, mais a importação da planilha que a escola já tem ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md)). Falta colocar no ar e aceitar. Ver [`docs/MVP-1.md`](MVP-1.md).
-- **MVP 2, notas e renovação dos alunos atuais:** primeiro as notas e avaliações da turma ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)); depois o MVP original da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#8-fluxo-funcional-mínimo-do-mvp), em que a família vê a prévia e confirma e a secretaria aprova ou recusa.
+- **MVP 2, notas e renovação dos alunos atuais:** primeiro as notas e avaliações da turma ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)); depois o MVP original da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#8-fluxo-funcional-mínimo-do-mvp), em que a família vê a prévia e confirma e a secretaria aprova ou recusa; e a frequência, depois dos perfis ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)).
 
 Até o MVP 1, o caminho tem começo, meio e fim:
 
@@ -59,10 +59,22 @@ O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da ado�
 | 9 | [Notas e avaliações](architecture/entrega-9-notas-avaliacoes.md): tipos de avaliação, avaliações da turma, lançamento em lote, média ponderada, correção com histórico e evento `nota_lancada` ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)) | MVP 2 | Em revisão ([PR #11](https://github.com/socramsea/alfa-gestao-escolar-/pull/11)); mescla depois do aceite do MVP 1 |
 | 10 | Renovação de matrícula: abertura do período, prévia, confirmação pela família, análise e aprovação, matrícula do novo ano, histórico | MVP 2 | Proposta; depende das decisões 1 e 2 |
 | 11 | Perfis e permissões: secretaria sem acesso administrativo total e, se for a decisão, conta do responsável | MVP 2 | Proposta; depende da decisão 2 |
-| 12 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |
-| 13 | Aceite do MVP 2: dados fictícios da Alfa Reis, notas lançadas, fluxo de renovação executado, critérios abaixo, gate com Docker, smoke e piloto | MVP 2 | — |
+| 12 | Frequência: chamada por turma e dia pelo professor, presença como padrão, justificativa em até 5 dias úteis e alerta à coordenação abaixo de 75% ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)) | MVP 2 | Decidida; depende da entrega 11 (conta de professor) |
+| 13 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |
+| 14 | Aceite do MVP 2: dados fictícios da Alfa Reis, notas lançadas, frequência registrada, fluxo de renovação executado, critérios abaixo, gate com Docker, smoke e piloto | MVP 2 | — |
 
-Depois do MVP 2, na ordem da visão do produto: o restante do pedagógico (bimestres, frequência e boletim), financeiro e produção. Cada um entra neste roteiro antes de começar. A ordem e a posição de frequência, mensagens, documentos e comunicações estão propostas no [ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md), ainda não aceito.
+Depois do MVP 2, nesta ordem ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md); detalhes em [`integracoes-zapi-zapsign.md`](architecture/integracoes-zapi-zapsign.md)):
+
+1. Mensagens por WhatsApp (Z-API), só transacionais.
+2. Documentos e assinatura eletrônica (ZapSign).
+3. Comunicações às famílias.
+
+Pré-requisitos dos três:
+- servidor próprio com domínio e HTTPS;
+- contratos de tratamento de dados (DPA) assinados com os dois fornecedores;
+- consentimento das famílias.
+
+Depois deles: o restante do pedagógico (bimestres e boletim), financeiro e produção. Cada um ganha número de entrega ao entrar neste roteiro, antes de começar.
 
 ## Critérios de aceite
 
@@ -84,7 +96,7 @@ Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-crit�
 | Estrutura modular documentada | Atendido |
 | Ambiente de desenvolvimento reproduzível | Atendido: Docker Compose e testes que recriam o banco |
 | PostgreSQL inicializado por migrations | Atendido |
-| Seeds criam dados fictícios do Demo | Parcial: só escola e administrador; falta a massa do Demo (entrega 13) |
+| Seeds criam dados fictícios do Demo | Parcial: só escola e administrador; falta a massa do Demo (entrega 14) |
 | Login e autenticação | Atendido |
 | Usuários e permissões validados | Parcial: só administrador da escola e da plataforma (entrega 11) |
 | Dados isolados por `school_id` | Atendido |
@@ -97,6 +109,7 @@ Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-crit�
 | Secretaria visualiza a solicitação | Falta para renovação (entrega 10); existe para aluno novo (MVP 1) |
 | Secretaria aprova ou rejeita | Falta para renovação (entrega 10); existe para aluno novo (MVP 1) |
 | Notas e avaliações da turma, com média ponderada e correção com histórico | Construído (entrega 9); falta o gate com Docker e o aceite |
+| Frequência por turma e dia, com justificativa e alerta abaixo de 75% | Falta (entrega 12) |
 | Status, data, usuário e histórico registrados | Atendido nos fluxos existentes |
 | Testes automatizados de autenticação, autorização e isolamento | Atendido |
 | Nenhum dado real no Demo | Atendido até aqui |
@@ -111,15 +124,13 @@ Já decididas de 2026-10-04 a 2026-10-06:
 - o MVP em duas etapas ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md));
 - a importação de planilha no MVP 1 ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md));
 - o IP real do visitante nos limites do nginx ([ADR-006](decisoes/ADR-006-ip-real-nos-limites-do-nginx.md));
-- notas e avaliações como entrega 9, no MVP 2, com renumeração das seguintes ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)).
+- notas e avaliações como entrega 9, no MVP 2, com renumeração das seguintes ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md));
+- frequência como entrega 12, no MVP 2, e mensagens (Z-API), documentos e assinatura (ZapSign) e comunicações depois do MVP 2, com risco aceito da conexão não oficial da Z-API e as regras de LGPD, consentimento, credenciais, armazenamento, frequência e processamento de eventos ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)).
 
 1. **Acesso do responsável na renovação:** pelo link pessoal com a data de nascimento, como na matrícula online, ou por conta própria. Define o desenho das entregas 10 e 11.
 2. **Perfis:** quais papéis existem além do administrador (secretaria, direção, coordenação…) e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
-3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 12).
+3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 13).
 4. **Recusa da escola na captação:** hoje aparece como "desistiu", misturando recusa da escola com desistência da família.
-5. **Frequência, mensagens, documentos e comunicações** ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md), proposta):
-    - **O que propõe:** uma etapa nova depois do aceite do MVP 2, nesta ordem: frequência, mensagens (Z-API), documentos e assinatura (TapSign), comunicações.
-    - **Ao aceitar:** as entregas ganham número, e os fornecedores e a LGPD recebem ADRs próprios.
 
 ## Regras de trabalho
 
