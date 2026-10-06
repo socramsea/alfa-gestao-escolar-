@@ -53,7 +53,7 @@ Telas:
 
 ## Fora deste recorte
 
-Envio automático de WhatsApp ou SMS, código de verificação por mensagem, assinatura digital do contrato, upload de documentos, financeiro (taxa e mensalidade), renovação dos alunos atuais (MVP 2, entrega 10 do [roteiro](../ROTEIRO.md)), ficha do aluno com histórico de alterações e edição de cadastro já aprovado.
+Envio automático de WhatsApp ou SMS, código de verificação por mensagem, assinatura digital do contrato, upload de documentos, financeiro (taxa e mensalidade), renovação dos alunos atuais (MVP 2, entrega 11 do [roteiro](../ROTEIRO.md)), ficha do aluno com histórico de alterações e edição de cadastro já aprovado.
 
 ## Validação executada em 2026-10-04
 

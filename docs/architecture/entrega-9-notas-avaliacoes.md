@@ -70,7 +70,7 @@ A migration `013_assessments` cria cinco tabelas, todas com `school_id`, RLS `EN
 
 ## Fora deste recorte
 
-- Conta e perfil do professor: a secretaria lança com o acesso de administrador (entrega 11, perfis).
+- Conta e perfil do professor: a secretaria lança com o acesso de administrador (entrega 12, perfis).
 - Bimestres ou trimestres, recuperação, arredondamento por regra da escola, média mínima e situação de aprovação.
 - Frequência, boletim, visão da família e aviso às famílias.
 - Disciplinas: a avaliação é da turma.
