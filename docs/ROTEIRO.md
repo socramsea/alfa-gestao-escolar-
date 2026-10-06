@@ -62,7 +62,7 @@ O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da ado�
 | 12 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |
 | 13 | Aceite do MVP 2: dados fictícios da Alfa Reis, notas lançadas, fluxo de renovação executado, critérios abaixo, gate com Docker, smoke e piloto | MVP 2 | — |
 
-Depois do MVP 2, na ordem da visão do produto: o restante do pedagógico (bimestres, frequência e boletim), financeiro e produção. Cada um entra neste roteiro antes de começar.
+Depois do MVP 2, na ordem da visão do produto: o restante do pedagógico (bimestres, frequência e boletim), financeiro e produção. Cada um entra neste roteiro antes de começar. A ordem e a posição de frequência, mensagens, documentos e comunicações estão propostas no [ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md), ainda não aceito.
 
 ## Critérios de aceite
 
@@ -117,13 +117,16 @@ Já decididas de 2026-10-04 a 2026-10-06:
 2. **Perfis:** quais papéis existem além do administrador (secretaria, direção, coordenação…) e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
 3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 12).
 4. **Recusa da escola na captação:** hoje aparece como "desistiu", misturando recusa da escola com desistência da família.
+5. **Frequência, mensagens, documentos e comunicações** ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md), proposta):
+    - **O que propõe:** uma etapa nova depois do aceite do MVP 2, nesta ordem: frequência, mensagens (Z-API), documentos e assinatura (TapSign), comunicações.
+    - **Ao aceitar:** as entregas ganham número, e os fornecedores e a LGPD recebem ADRs próprios.
 
 ## Regras de trabalho
 
 1. **O `main` é a fonte da verdade.** O que não está no `main` não está pronto.
 2. **Uma entrega por vez.** Cada entrega sai de uma branch criada a partir do `main` atualizado e vira um PR para o `main`. A próxima só começa depois que a anterior foi mesclada. Correções da mesma entrega podem ir no mesmo PR.
 3. **Nada fora do roteiro.** Começar algo que não está aqui exige primeiro um PR que atualize este roteiro. Mudança de escopo, de ordem ou de regra de segurança exige também um ADR, como manda o [controle de mudanças](visao-negocio-e-arquitetura-do-mvp.md#14-controle-de-mudanças).
-4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 008.
+4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 009.
 5. **Definição de pronto:**
    - testes do backend, do frontend e do navegador passando;
    - documento da entrega em `docs/architecture/entrega-N-*.md`, com o que foi feito e como foi validado;
