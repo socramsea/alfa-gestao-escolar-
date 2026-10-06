@@ -1,4 +1,4 @@
-# ADR-011 — Diário da turma e assistente de busca com IA
+# ADR-011 — Diário da turma, agenda do professor e assistente de busca com IA
 
 Status: **PROPOSTA**, a partir do pedido do responsável pelo projeto em 2026-10-06. Depende da decisão dele sobre a posição no roteiro e sobre o modelo de IA.
 
@@ -12,6 +12,8 @@ Professores e secretaria pediram que o espaço de cada sala ([ADR-010](ADR-010-t
 No futuro, os professores usariam um tablet para seguir o plano de aula.
 
 O responsável também quer um **assistente de IA num chat**, que encontre os dados para quem pergunta. Ele considerou um modelo Llama rodando num computador da empresa, ou um agente próprio.
+
+Depois, ainda em 2026-10-06, ele pediu que **cada professora tenha o próprio acesso**, com uma página para cada sala e uma agenda para organizar as coisas dela dentro do sistema da escola.
 
 ## Proposta
 
@@ -59,12 +61,39 @@ O computador do responsável já tem o Ollama instalado, o que facilita o teste 
 
 **LGPD:** são dados de crianças e adolescentes (LGPD, art. 14). O assistente mostra só o que o perfil de quem pergunta já pode ver. Com modelo hospedado, o fornecedor entra no checklist de DPA do ADR-008.
 
+### 3. Página e agenda do professor
+
+**Cada professor entra com o próprio acesso** e vê só as salas em que dá aula. O acesso vem com os perfis (entrega 12). A primeira tela é a página dele: as suas salas, o que tem hoje e as suas tarefas.
+
+**Uma página para cada sala.** A página da sala é a ficha da turma do [ADR-010](ADR-010-telas-organizadas-por-tarefa.md), com o diário e a agenda da sala. Quem dá aula em mais de uma sala, como os professores de Educação Física ou de Inglês, tem uma página para cada sala e uma agenda só.
+
+**A agenda reúne, numa tela:**
+
+| O quê | Quem marca | Quem vê |
+|---|---|---|
+| Horário da semana: as aulas de cada sala | A secretaria, em Configurações, ou por planilha | O próprio professor |
+| Compromissos da escola: reuniões, conselho de classe | A coordenação ou a secretaria | Todos os professores |
+| Agenda da sala: provas, passeios, trabalhos | Os professores da sala e a secretaria | Os professores da sala e a secretaria |
+| Tarefas e lembretes pessoais, com caixa de marcar quando feitos | O próprio professor | Só o próprio professor |
+
+**Regras:**
+- O que é sobre um aluno vai para o diário, como ocorrência, e não para a anotação pessoal. Assim a coordenação vê o que precisa ver.
+- A agenda segue a regra de só inserção: cancelar um compromisso ou marcar uma tarefa como feita grava um registro novo.
+- O horário da semana é um cadastro novo. Ele não existe hoje no banco.
+
+**Posição:** junto com o Diário da turma (entrega 13), porque usa as mesmas salas e o mesmo acesso de professor. Se a entrega ficar grande demais, a agenda vira uma entrega própria logo depois.
+
+O protótipo clicável já mostra a página e a agenda nas visões "Profª Regina", com uma sala, e "Prof. Paulo", com duas salas.
+
 ## O que o responsável decide
 
 1. O diário da turma substitui a entrega 13 (frequência), como "chamada, ocorrências e plano de aula", ou vira entregas separadas?
 2. O assistente de IA fica depois do MVP 2, como módulo próprio, depois do teste comparando modelo local e hospedado?
+3. A página e a agenda do professor entram junto com o Diário da turma (entrega 13) ou numa entrega própria logo depois? As anotações pessoais ficam visíveis só para o próprio professor?
 
 ## Consequências, se aceito
 
 - **Roteiro:** a entrega 13 passa a se chamar "Diário da turma". O assistente entra como módulo depois do MVP 2, com o resultado do teste registrado num ADR próprio.
 - **Escopo:** frequência, ocorrências e plano de aula nascem como parte da ficha da turma da entrega 10, e não como telas soltas.
+- **Perfis (entrega 12):** o perfil de professor fica limitado às salas em que ele dá aula.
+- **Banco:** a agenda pede tabelas novas, para o horário da semana, os compromissos e as anotações pessoais, com RLS e só inserção como as demais.

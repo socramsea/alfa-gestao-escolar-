@@ -138,9 +138,10 @@ Já decididas de 2026-10-04 a 2026-10-06:
     - **Falta para a entrega 12:** professor, coordenação e o que cada um faz.
 3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 14).
 4. **Recusa da escola na captação:** hoje aparece como "desistiu", misturando recusa da escola com desistência da família.
-5. **Diário da turma e assistente com IA** ([ADR-011](decisoes/ADR-011-diario-da-turma-e-assistente.md), proposta):
+5. **Diário da turma, agenda do professor e assistente com IA** ([ADR-011](decisoes/ADR-011-diario-da-turma-e-assistente.md), proposta):
     - o diário da turma (chamada, ocorrências e plano de aula) substitui a entrega 13 (frequência) ou vira entregas separadas;
-    - o assistente de busca com IA fica depois do MVP 2, depois de um teste comparando modelo local (Llama) e hospedado.
+    - o assistente de busca com IA fica depois do MVP 2, depois de um teste comparando modelo local (Llama) e hospedado;
+    - a página e a agenda do professor (acesso próprio, uma página para cada sala, horário, compromissos e tarefas) entram junto com o diário ou numa entrega própria logo depois.
 6. **IA como camada sobre o sistema** ([ADR-012](decisoes/ADR-012-ia-como-camada-sobre-o-sistema.md), proposta):
     - regras para qualquer função de IA: a IA sugere e a pessoa decide, só lê com as permissões de quem pediu, tudo fica registrado, sem leitura de emoção, nota de risco ou biometria;
     - chamada por voz e ocorrência ditada como opção no Diário da turma (entrega 13);
