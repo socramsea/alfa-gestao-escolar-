@@ -2,14 +2,18 @@
 
 Decisões em [ADR-008](../decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md). Nenhuma das duas está implementada.
 
-Elas entram depois do aceite do MVP 2, na ordem: Mensagens, depois Documentos e assinatura. Até a aprovação de produção, os envios vão só para números de teste da equipe.
+Elas entram no MVP 3, depois do aceite do MVP 2, na ordem: Mensagens, depois Documentos e assinatura. Até a aprovação de produção, os envios vão só para números de teste da equipe.
 
-## Antes da primeira entrega com integração
+## Checklist do piloto: responsabilidade da escola
 
-- [ ] Servidor próprio (VPS) com domínio e HTTPS: [`deploy/NO-AR.md`](../../deploy/NO-AR.md). Os webhooks não funcionam pelo túnel temporário.
-- [ ] Contrato de tratamento de dados (DPA) assinado com a Z-API e com a ZapSign.
-- [ ] Consentimento da família no checkbox da pré-matrícula e na cláusula do contrato de matrícula: "A família autoriza receber comunicações educacionais por WhatsApp no número informado."
-- [ ] Confirmação do jurídico da escola de que a assinatura eletrônica na tela vale para o contrato de matrícula.
+- [ ] A escola assina os DPAs da Z-API e da ZapSign antes da primeira mensagem real.
+- [ ] O jurídico confirma a validade da assinatura eletrônica para o contrato de matrícula (Decreto 10.543/2020, MP 2.200-2/01).
+
+## Pré-requisitos técnicos
+
+- [ ] **Para Mensagens:** servidor próprio (VPS) com domínio e HTTPS: [`deploy/NO-AR.md`](../../deploy/NO-AR.md). Os webhooks não funcionam pelo túnel temporário.
+- [ ] **Para Mensagens:** consentimento da família no checkbox da pré-matrícula e na cláusula do contrato de matrícula: "A família autoriza receber comunicações educacionais por WhatsApp no número informado." O número é o informado na pré-matrícula.
+- [ ] **Para Documentos:** antes de implementar o upload, montar o volume `/data/uploads/` com permissão de escrita e incluí-lo no script de backup. Isso não bloqueia as entregas 9 a 14.
 
 ## Z-API: mensagens por WhatsApp
 

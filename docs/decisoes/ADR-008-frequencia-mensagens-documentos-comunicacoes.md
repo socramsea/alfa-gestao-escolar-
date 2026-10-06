@@ -27,7 +27,7 @@ A ordem é: frequência, mensagens, documentos e assinatura, comunicações.
 | Módulo | Onde entra | Por quê |
 |---|---|---|
 | Frequência | **No MVP 2, como entrega 12**, logo depois dos perfis (entrega 11) | Não usa fornecedor externo. A chamada é diária e feita pelo professor, por isso depende da conta de professor |
-| Mensagens (Z-API) | **Depois do aceite do MVP 2** | Integração real. Precisa de servidor próprio com HTTPS |
+| Mensagens (Z-API) | **Depois do aceite do MVP 2, no MVP 3** | Integração real. Precisa de servidor próprio com HTTPS |
 | Documentos e assinatura (ZapSign) | Depois de Mensagens | Integração real. Precisa de armazenamento privado e do servidor próprio. O link de assinatura vai pela própria ZapSign, que envia por WhatsApp |
 | Comunicações | Depois de Documentos | Usa o envio e o registro de Mensagens |
 
@@ -67,7 +67,7 @@ Os valores foram informados pelo responsável em 2026-10-06 e devem ser conferid
 | Ponto | Decisão |
 |---|---|
 | LGPD com fornecedores | Cada fornecedor assina um contrato de tratamento de dados (DPA). A Z-API e a ZapSign têm o seu; a escola solicita e assina os dois antes do primeiro envio real |
-| Consentimento da família | Checkbox na pré-matrícula e cláusula no contrato de matrícula: "A família autoriza receber comunicações educacionais por WhatsApp no número informado." |
+| Consentimento da família | Checkbox na pré-matrícula e cláusula no contrato de matrícula: "A família autoriza receber comunicações educacionais por WhatsApp no número informado." O número é o informado na pré-matrícula. |
 | Credenciais | Tokens dos fornecedores em variáveis de ambiente (`.env`) no servidor, nunca no código. Rotação semestral |
 | Armazenamento de documentos | Disco do servidor, no volume Docker `/data/uploads/`. No futuro, MinIO ou S3. O armazenamento da Z-API não é o principal, porque os arquivos lá expiram em 30 dias |
 | Frequência | O padrão é presente; o professor marca só a falta. A justificativa pode vir depois, em até 5 dias úteis. Frequência abaixo de 75% gera alerta para a coordenação |
@@ -76,7 +76,9 @@ Os valores foram informados pelo responsável em 2026-10-06 e devem ser conferid
 ## Consequências
 
 - O roteiro ganha a frequência como entrega 12 no MVP 2. A correção de registros passa a 13, e o aceite do MVP 2 a 14.
-- Mensagens, documentos e comunicações ficam listados depois do MVP 2, nessa ordem e sem número.
+- Mensagens, documentos e comunicações formam o MVP 3, depois do aceite do MVP 2, nessa ordem. Ainda não têm número de entrega.
+- **Pré-requisito da entrega de Documentos:** antes de implementar o upload, montar o volume `/data/uploads/` com permissão de escrita e incluí-lo no script de backup. Isso não bloqueia as entregas 9 a 14.
+- **Responsabilidade da escola, no checklist do piloto:** a escola assina os DPAs da Z-API e da ZapSign antes da primeira mensagem real. O jurídico da escola confirma a validade da assinatura eletrônica para o contrato de matrícula.
 - **Pré-requisitos antes da entrega de Mensagens:**
   - servidor próprio com domínio e HTTPS;
   - os dois DPAs assinados;

@@ -6,6 +6,7 @@ O MVP sai em duas etapas ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md)):
 
 - **MVP 1, matrícula sem papel da unidade nova:** do site da escola até o aluno matriculado na turma, mais a importação da planilha que a escola já tem ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md)). Falta colocar no ar e aceitar. Ver [`docs/MVP-1.md`](MVP-1.md).
 - **MVP 2, notas e renovação dos alunos atuais:** primeiro as notas e avaliações da turma ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)); depois o MVP original da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#8-fluxo-funcional-mínimo-do-mvp), em que a família vê a prévia e confirma e a secretaria aprova ou recusa; e a frequência, depois dos perfis ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)).
+- **MVP 3, integrações com as famílias:** mensagens por WhatsApp (Z-API), documentos e assinatura (ZapSign) e comunicados, depois do aceite do MVP 2 ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)). Ainda sem número de entrega.
 
 Até o MVP 1, o caminho tem começo, meio e fim:
 
@@ -63,7 +64,7 @@ O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da ado�
 | 13 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |
 | 14 | Aceite do MVP 2: dados fictícios da Alfa Reis, notas lançadas, frequência registrada, fluxo de renovação executado, critérios abaixo, gate com Docker, smoke e piloto | MVP 2 | — |
 
-Depois do MVP 2, nesta ordem ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md); detalhes em [`integracoes-zapi-zapsign.md`](architecture/integracoes-zapi-zapsign.md)):
+**MVP 3**, depois do aceite do MVP 2, nesta ordem e ainda sem número de entrega ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md); detalhes em [`integracoes-zapi-zapsign.md`](architecture/integracoes-zapi-zapsign.md)):
 
 1. Mensagens por WhatsApp (Z-API), só transacionais.
 2. Documentos e assinatura eletrônica (ZapSign).
@@ -72,9 +73,10 @@ Depois do MVP 2, nesta ordem ([ADR-008](decisoes/ADR-008-frequencia-mensagens-do
 Pré-requisitos dos três:
 - servidor próprio com domínio e HTTPS;
 - contratos de tratamento de dados (DPA) assinados com os dois fornecedores;
-- consentimento das famílias.
+- consentimento das famílias;
+- para Documentos: o volume `/data/uploads/` com permissão de escrita e incluído no script de backup, antes de implementar o upload. Isso não bloqueia as entregas 9 a 14.
 
-Depois deles: o restante do pedagógico (bimestres e boletim), financeiro e produção. Cada um ganha número de entrega ao entrar neste roteiro, antes de começar.
+Depois do MVP 3: o restante do pedagógico (bimestres e boletim), financeiro e produção. Cada um ganha número de entrega ao entrar neste roteiro, antes de começar.
 
 ## Critérios de aceite
 
