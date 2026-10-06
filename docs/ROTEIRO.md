@@ -141,13 +141,17 @@ Já decididas de 2026-10-04 a 2026-10-06:
 5. **Diário da turma e assistente com IA** ([ADR-011](decisoes/ADR-011-diario-da-turma-e-assistente.md), proposta):
     - o diário da turma (chamada, ocorrências e plano de aula) substitui a entrega 13 (frequência) ou vira entregas separadas;
     - o assistente de busca com IA fica depois do MVP 2, depois de um teste comparando modelo local (Llama) e hospedado.
+6. **IA como camada sobre o sistema** ([ADR-012](decisoes/ADR-012-ia-como-camada-sobre-o-sistema.md), proposta):
+    - regras para qualquer função de IA: a IA sugere e a pessoa decide, só lê com as permissões de quem pediu, tudo fica registrado, sem leitura de emoção, nota de risco ou biometria;
+    - chamada por voz e ocorrência ditada como opção no Diário da turma (entrega 13);
+    - quais ideias de IA vêm primeiro depois do MVP 2.
 
 ## Regras de trabalho
 
 1. **O `main` é a fonte da verdade.** O que não está no `main` não está pronto.
 2. **Uma entrega por vez.** Cada entrega sai de uma branch criada a partir do `main` atualizado e vira um PR para o `main`. A próxima só começa depois que a anterior foi mesclada. Correções da mesma entrega podem ir no mesmo PR.
 3. **Nada fora do roteiro.** Começar algo que não está aqui exige primeiro um PR que atualize este roteiro. Mudança de escopo, de ordem ou de regra de segurança exige também um ADR, como manda o [controle de mudanças](visao-negocio-e-arquitetura-do-mvp.md#14-controle-de-mudanças).
-4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 012.
+4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 013.
 5. **Definição de pronto:**
    - testes do backend, do frontend e do navegador passando;
    - documento da entrega em `docs/architecture/entrega-N-*.md`, com o que foi feito e como foi validado;
