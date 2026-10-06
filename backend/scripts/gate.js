@@ -18,8 +18,8 @@ function docker(args) {
   if (p.status !== 0) throw new Error(`Docker ${args[0]} falhou: ${p.stderr?.trim()}`);
   return p.stdout.trim();
 }
-async function command(args, env) {
-  const child = spawn(process.execPath, args, { env, stdio: 'inherit' });
+async function command(args, env, cwd) {
+  const child = spawn(process.execPath, args, { env, stdio: 'inherit', cwd });
   const [code] = await once(child, 'exit');
   if (code !== 0) throw new Error(`Comando ${args[0]} terminou com codigo ${code}`);
 }
@@ -133,6 +133,8 @@ try {
       E2E_BASE_URL: `http://127.0.0.1:${webPort}`, E2E_EMAIL: env.ADMIN_EMAIL,
       E2E_PASSWORD: env.ADMIN_PASSWORD, E2E_SCREENSHOT: '/tmp/alfa-mvp-mobile.png',
       E2E_BROWSER_EXECUTABLE: process.env.E2E_BROWSER_EXECUTABLE || '/usr/bin/google-chrome' };
+    // O navegador testa o build desta versão, nunca um dist antigo que tenha ficado na pasta.
+    await command(['node_modules/vite/bin/vite.js','build'], { ...browserEnv, NODE_ENV: 'production' }, '../frontend');
     preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port',String(webPort),'--strictPort'],
       { cwd: '../frontend', env: browserEnv, stdio: 'inherit' });
     let webReady = false;

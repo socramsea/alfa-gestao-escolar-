@@ -5,7 +5,8 @@ Este é o único roteiro vigente do Alfa Gestão Escolar ([ADR-003](decisoes/ADR
 O MVP sai em duas etapas ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md)):
 
 - **MVP 1, matrícula sem papel da unidade nova:** do site da escola até o aluno matriculado na turma, mais a importação da planilha que a escola já tem ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md)). Falta colocar no ar e aceitar. Ver [`docs/MVP-1.md`](MVP-1.md).
-- **MVP 2, renovação dos alunos atuais:** o MVP original da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#8-fluxo-funcional-mínimo-do-mvp). A família vê a prévia e confirma; a secretaria aprova ou recusa.
+- **MVP 2, notas e renovação dos alunos atuais:** primeiro as notas e avaliações da turma ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)); depois o MVP original da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#8-fluxo-funcional-mínimo-do-mvp), em que a família vê a prévia e confirma e a secretaria aprova ou recusa; e a frequência, depois dos perfis ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)).
+- **MVP 3, integrações com as famílias:** mensagens por WhatsApp (Z-API), documentos e assinatura (ZapSign) e comunicados, depois do aceite do MVP 2 ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)). Ainda sem número de entrega.
 
 Até o MVP 1, o caminho tem começo, meio e fim:
 
@@ -38,7 +39,7 @@ O monolito JS é a linha oficial: backend Node.js + Express sobre PostgreSQL com
 | `main` | Linha oficial. |
 | `monolito-js`, `feat/profissionais-atribuicoes`, `minha-maquina` | Mesmo commit (entrega 4); absorvidas pelo `main`. Podem ser apagadas. |
 | `claude/entrega-5-site`, `claude/entrega-6-matricula-online`, `claude/correcoes-logica-matricula` | Mescladas no `main`. Podem ser apagadas. |
-| `claude/prototipo-ts`, `claude/pode-entra-pc-ticyor` | Mesmo commit. Protótipo TypeScript paralelo, **arquivado**: não recebe mais trabalho. Fica como referência para a renovação (entrega 9): o fluxo, a decisão "cadastro completado pelo responsável via link pessoal" e a demonstração `docs/demo/demo-renovacao.html`. |
+| `claude/prototipo-ts`, `claude/pode-entra-pc-ticyor` | Mesmo commit. Protótipo TypeScript paralelo, **arquivado**: não recebe mais trabalho. Fica como referência para a renovação (entrega 11): o fluxo, a decisão "cadastro completado pelo responsável via link pessoal" e a demonstração `docs/demo/demo-renovacao.html`. |
 
 O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da adoção do monolito.
 
@@ -56,12 +57,27 @@ O esqueleto TypeScript da fase 0 continua no histórico do `main`, antes da ado�
 | 6.1 | [Correções de lógica da captação e da matrícula online](architecture/entrega-6-matricula-online.md#correções-após-revisão-2026-10-04) | Meio | No `main` ([PR #2](https://github.com/socramsea/alfa-gestao-escolar-/pull/2)) |
 | 7 | [Importação de planilha](architecture/entrega-7-importacao-planilha.md): alunos, responsáveis, vínculos e matrículas a partir da lista da escola | Meio | No `main` ([PR #6](https://github.com/socramsea/alfa-gestao-escolar-/pull/6)) |
 | 8 | **No ar e aceite do MVP 1:** teste completo com Docker, sistema online com HTTPS (na reunião, a partir do computador do responsável por um túnel, [guia](../deploy/NO-AR-COMPUTADOR.md); depois, numa VPS, [guia](../deploy/NO-AR.md)), contas de demonstração e [passo a passo de demonstração](MVP-1.md#passo-a-passo-de-demonstração) aprovado pelo responsável | Fim do MVP 1 | **Em andamento**, até 06/10 às 18h |
-| 9 | Renovação de matrícula: abertura do período, prévia, confirmação pela família, análise e aprovação, matrícula do novo ano, histórico | MVP 2 | Proposta; depende das decisões 1 e 2 |
-| 10 | Perfis e permissões: secretaria sem acesso administrativo total e, se for a decisão, conta do responsável | MVP 2 | Proposta; depende da decisão 2 |
-| 11 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |
-| 12 | Aceite do MVP 2: dados fictícios da Alfa Reis, fluxo de renovação executado, critérios abaixo, gate com Docker, smoke e piloto | MVP 2 | — |
+| 9 | [Notas e avaliações](architecture/entrega-9-notas-avaliacoes.md): tipos de avaliação, avaliações da turma, lançamento em lote, média ponderada, correção com histórico e evento `nota_lancada` ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md)) | MVP 2 | Em revisão ([PR #11](https://github.com/socramsea/alfa-gestao-escolar-/pull/11)); mescla depois do aceite do MVP 1 |
+| 10 | **Telas organizadas pelas tarefas da escola:** Início com o que fazer hoje, Turmas com o espaço de cada sala, Alunos com a ficha completa, Novas matrículas num caminho só e Configurações com passo a passo; busca no topo; sem códigos internos; linguagem de escola ([ADR-010](decisoes/ADR-010-telas-organizadas-por-tarefa.md)) | MVP 2 | Decidida; começa por um protótipo clicável validado com professores e secretaria |
+| 11 | Renovação de matrícula: abertura do período, prévia, confirmação pela família, análise e aprovação, matrícula do novo ano, histórico | MVP 2 | Decidida ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md)): família pelo link pessoal, sem conta; administrador e responsável. Começa depois que o PR #11 for mesclado |
+| 12 | Perfis e permissões: secretaria sem acesso administrativo total e, se for a decisão, conta do responsável | MVP 2 | Proposta; depende da decisão 2 |
+| 13 | Frequência: chamada por turma e dia pelo professor, presença como padrão, justificativa em até 5 dias úteis e alerta à coordenação abaixo de 75% ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md)) | MVP 2 | Decidida; depende da entrega 12 (conta de professor) |
+| 14 | Correção e cancelamento de registros: corrigir aluno, responsável e vínculo; trocar de turma; cancelar matrícula; com histórico | MVP 2 | Proposta; depende da decisão 3 |
+| 15 | Aceite do MVP 2: dados fictícios da Alfa Reis, notas lançadas, frequência registrada, fluxo de renovação executado, critérios abaixo, gate com Docker, smoke e piloto | MVP 2 | — |
 
-Depois do MVP 2, na ordem da visão do produto: pedagógico, financeiro e produção. Cada um entra neste roteiro antes de começar.
+**MVP 3**, depois do aceite do MVP 2, nesta ordem e ainda sem número de entrega ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md); detalhes em [`integracoes-zapi-zapsign.md`](architecture/integracoes-zapi-zapsign.md)):
+
+1. Mensagens por WhatsApp (Z-API), só transacionais.
+2. Documentos e assinatura eletrônica (ZapSign).
+3. Comunicações às famílias.
+
+Pré-requisitos dos três:
+- servidor próprio com domínio e HTTPS;
+- contratos de tratamento de dados (DPA) assinados com os dois fornecedores;
+- consentimento das famílias;
+- para Documentos: o volume `/data/uploads/` com permissão de escrita e incluído no script de backup, antes de implementar o upload. Isso não bloqueia as entregas 9 a 14.
+
+Depois do MVP 3: o restante do pedagógico (bimestres e boletim), financeiro e produção. Cada um ganha número de entrega ao entrar neste roteiro, antes de começar.
 
 ## Critérios de aceite
 
@@ -83,18 +99,20 @@ Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-crit�
 | Estrutura modular documentada | Atendido |
 | Ambiente de desenvolvimento reproduzível | Atendido: Docker Compose e testes que recriam o banco |
 | PostgreSQL inicializado por migrations | Atendido |
-| Seeds criam dados fictícios do Demo | Parcial: só escola e administrador; falta a massa do Demo (entrega 12) |
+| Seeds criam dados fictícios do Demo | Parcial: só escola e administrador; falta a massa do Demo (entrega 15) |
 | Login e autenticação | Atendido |
-| Usuários e permissões validados | Parcial: só administrador da escola e da plataforma (entrega 10) |
+| Usuários e permissões validados | Parcial: só administrador da escola e da plataforma (entrega 12) |
 | Dados isolados por `school_id` | Atendido |
-| Responsável acessa somente seus próprios alunos | Falta (entregas 9 e 10) |
-| Secretaria cadastra aluno e responsável | Parcial: só com perfil de administrador (entrega 10); também por planilha (entrega 7) |
+| Responsável acessa somente seus próprios alunos | Falta (entrega 11, pelo link pessoal, como no MVP 1) |
+| Secretaria cadastra aluno e responsável | Parcial: só com perfil de administrador (entrega 12); também por planilha (entrega 7) |
 | Vínculo aluno-responsável | Atendido |
 | Turma e período configuráveis | Atendido |
-| Responsável visualiza uma prévia | Falta para renovação (entrega 9); existe para aluno novo (MVP 1) |
-| Responsável confirma os dados | Falta para renovação (entrega 9); existe para aluno novo (MVP 1) |
-| Secretaria visualiza a solicitação | Falta para renovação (entrega 9); existe para aluno novo (MVP 1) |
-| Secretaria aprova ou rejeita | Falta para renovação (entrega 9); existe para aluno novo (MVP 1) |
+| Responsável visualiza uma prévia | Falta para renovação (entrega 11); existe para aluno novo (MVP 1) |
+| Responsável confirma os dados | Falta para renovação (entrega 11); existe para aluno novo (MVP 1) |
+| Secretaria visualiza a solicitação | Falta para renovação (entrega 11); existe para aluno novo (MVP 1) |
+| Secretaria aprova ou rejeita | Falta para renovação (entrega 11); existe para aluno novo (MVP 1) |
+| Notas e avaliações da turma, com média ponderada e correção com histórico | Construído (entrega 9); falta o gate com Docker e o aceite |
+| Frequência por turma e dia, com justificativa e alerta abaixo de 75% | Falta (entrega 13) |
 | Status, data, usuário e histórico registrados | Atendido nos fluxos existentes |
 | Testes automatizados de autenticação, autorização e isolamento | Atendido |
 | Nenhum dado real no Demo | Atendido até aqui |
@@ -103,24 +121,40 @@ Critérios da [visão do produto](visao-negocio-e-arquitetura-do-mvp.md#12-crit�
 
 Cada uma vira um ADR quando for tomada. As três primeiras só são necessárias para o MVP 2.
 
-Já decididas em 2026-10-04 e 2026-10-05:
+Já decididas de 2026-10-04 a 2026-10-06:
 - as 7 decisões propostas da entrega 5;
 - a revisão da decisão 3 da entrega 6: dados da ficha no cadastro (PR #2);
 - o MVP em duas etapas ([ADR-004](decisoes/ADR-004-mvp-em-duas-etapas.md));
 - a importação de planilha no MVP 1 ([ADR-005](decisoes/ADR-005-importacao-de-planilha.md));
-- o IP real do visitante nos limites do nginx ([ADR-006](decisoes/ADR-006-ip-real-nos-limites-do-nginx.md)).
+- o IP real do visitante nos limites do nginx ([ADR-006](decisoes/ADR-006-ip-real-nos-limites-do-nginx.md));
+- notas e avaliações como entrega 9, no MVP 2, com renumeração das seguintes ([ADR-007](decisoes/ADR-007-notas-e-avaliacoes-na-entrega-9.md));
+- frequência como entrega 13, no MVP 2, e mensagens (Z-API), documentos e assinatura (ZapSign) e comunicações depois do MVP 2, com risco aceito da conexão não oficial da Z-API e as regras de LGPD, consentimento, credenciais, armazenamento, frequência e processamento de eventos ([ADR-008](decisoes/ADR-008-frequencia-mensagens-documentos-comunicacoes.md));
+- na renovação, acesso da família pelo link pessoal, sem conta, e perfis administrador e responsável; professor e coordenação na entrega 12 ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md));
+- telas organizadas pelas tarefas da escola, como entrega 10 antes da renovação, com renumeração das seguintes ([ADR-010](decisoes/ADR-010-telas-organizadas-por-tarefa.md)).
 
-1. **Acesso do responsável na renovação:** pelo link pessoal com a data de nascimento, como na matrícula online, ou por conta própria. Define o desenho das entregas 9 e 10.
-2. **Perfis:** quais papéis existem além do administrador (secretaria, direção, coordenação…) e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
-3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 11).
+1. **Acesso do responsável na renovação:** **decidida em 06/10** ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md)). O acesso é pelo link pessoal com a data de nascimento, como na matrícula online, sem conta própria.
+2. **Perfis:** quais papéis existem além do administrador e o que cada um faz. É a matriz de permissões pendente na [arquitetura](architecture/arquitetura-sistema-escolar.md#11-pendências-de-detalhamento).
+    - **Para a entrega 11, decidida** ([ADR-009](decisoes/ADR-009-renovacao-link-pessoal-e-perfis.md)): administrador, que é a secretaria ou a direção, e responsável pelo link.
+    - **Professor, decidido em 06/10** ([ADR-011](decisoes/ADR-011-diario-da-turma-e-assistente.md)): login e senha próprios; vê e registra só nas turmas em que dá aula; tudo o que registra leva o nome dele.
+    - **Direção, decidido em 06/10** ([ADR-011](decisoes/ADR-011-diario-da-turma-e-assistente.md)): vê tudo o que acontece na escola e no sistema, inclusive o histórico de quem fez o quê.
+    - **Falta para a entrega 12:** coordenação e o detalhe das permissões de cada perfil.
+3. **Correção de registros:** o que pode ser corrigido ou cancelado, por quem e com que histórico (entrega 14).
 4. **Recusa da escola na captação:** hoje aparece como "desistiu", misturando recusa da escola com desistência da família.
+5. **Diário da turma, agenda do professor e assistente com IA** ([ADR-011](decisoes/ADR-011-diario-da-turma-e-assistente.md), proposta):
+    - o diário da turma (chamada, ocorrências e plano de aula) substitui a entrega 13 (frequência) ou vira entregas separadas;
+    - o assistente de busca com IA fica depois do MVP 2, depois de um teste comparando modelo local (Llama) e hospedado;
+    - **decidido em 06/10:** a página e a agenda do professor (acesso próprio, uma página para cada sala, horário, compromissos e tarefas) entram junto com o diário; só o professor anota e marca as anotações pessoais, e a direção vê tudo.
+6. **IA como camada sobre o sistema** ([ADR-012](decisoes/ADR-012-ia-como-camada-sobre-o-sistema.md), proposta):
+    - regras para qualquer função de IA: a IA sugere e a pessoa decide, só lê com as permissões de quem pediu, tudo fica registrado, sem leitura de emoção, nota de risco ou biometria;
+    - chamada por voz e ocorrência ditada como opção no Diário da turma (entrega 13);
+    - quais ideias de IA vêm primeiro depois do MVP 2.
 
 ## Regras de trabalho
 
 1. **O `main` é a fonte da verdade.** O que não está no `main` não está pronto.
 2. **Uma entrega por vez.** Cada entrega sai de uma branch criada a partir do `main` atualizado e vira um PR para o `main`. A próxima só começa depois que a anterior foi mesclada. Correções da mesma entrega podem ir no mesmo PR.
 3. **Nada fora do roteiro.** Começar algo que não está aqui exige primeiro um PR que atualize este roteiro. Mudança de escopo, de ordem ou de regra de segurança exige também um ADR, como manda o [controle de mudanças](visao-negocio-e-arquitetura-do-mvp.md#14-controle-de-mudanças).
-4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 007.
+4. **ADRs com numeração única** em `docs/decisoes/`, com status Proposta ou Aceito. Um número nunca é reutilizado; o próximo livre é o 013.
 5. **Definição de pronto:**
    - testes do backend, do frontend e do navegador passando;
    - documento da entrega em `docs/architecture/entrega-N-*.md`, com o que foi feito e como foi validado;
