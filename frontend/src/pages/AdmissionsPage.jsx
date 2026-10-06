@@ -54,7 +54,7 @@ export default function AdmissionsPage() {
     <header className="topbar"><div><strong>Alfa Gestão Escolar</strong><span>{user.name}</span></div>
       <button className="secondary-button" onClick={logout}>Sair</button></header>
     <div className="page-content">
-      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais">Profissionais</Link><Link to="/secretaria/captacao" aria-current="page">Captação</Link></nav>
+      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais">Profissionais</Link><Link to="/secretaria/notas">Notas</Link><Link to="/secretaria/captacao" aria-current="page">Captação</Link></nav>
       <h1>Captação</h1>
       <p>Famílias interessadas, visitas e o site da escola. A pré-matrícula feita no site chega aqui. Use dados fictícios neste piloto.</p>
       <nav className="structure-tabs" aria-label="Áreas da captação">{tabs.map(([key, label]) =>

@@ -69,7 +69,7 @@ export default function PeoplePage() {
     <header className="topbar"><div><strong>Alfa Gestão Escolar</strong><span>{user.name}</span></div>
       <button className="secondary-button" onClick={logout}>Sair</button></header>
     <div className="page-content">
-      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas" aria-current="page">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais">Profissionais</Link><Link to="/secretaria/captacao">Captação</Link></nav>
+      <nav className="structure-tabs" aria-label="Áreas da secretaria"><Link to="/secretaria">Estrutura escolar</Link><Link to="/secretaria/pessoas" aria-current="page">Alunos e responsáveis</Link><Link to="/secretaria/matriculas">Matrículas</Link><Link to="/secretaria/profissionais">Profissionais</Link><Link to="/secretaria/notas">Notas</Link><Link to="/secretaria/captacao">Captação</Link></nav>
       <h1>Alunos e responsáveis</h1><p>Cadastre as pessoas e vincule cada responsável ao aluno. Use dados fictícios neste piloto.</p>
       <nav className="structure-tabs" aria-label="Cadastros de pessoas">{tabs.map(([key,label])=><button key={key} className={tab===key?'primary-button':'secondary-button'} aria-current={tab===key?'page':undefined} disabled={busy} onClick={()=>switchTab(key)}>{label}</button>)}</nav>
       {success && <p className="success-message" role="status">{success}</p>}
