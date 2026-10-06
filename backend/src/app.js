@@ -14,6 +14,8 @@ import publicRoutes from './modules/admissions/public.routes.js';
 import onlineEnrollmentRoutes from './modules/online-enrollments/online-enrollments.routes.js';
 import familyRoutes from './modules/online-enrollments/family.routes.js';
 import assessmentsRoutes from './modules/assessments/assessments.routes.js';
+import reenrollmentsRoutes from './modules/reenrollments/reenrollments.routes.js';
+import familyReenrollmentRoutes from './modules/reenrollments/family.routes.js';
 import { pool } from './config/db.js';
 
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -57,6 +59,8 @@ app.use('/api/public', publicRoutes);
 app.use('/api/online-enrollments', onlineEnrollmentRoutes);
 app.use('/api/family/enrollments', familyRoutes);
 app.use('/api/assessments', assessmentsRoutes);
+app.use('/api/reenrollments', reenrollmentsRoutes);
+app.use('/api/family/reenrollments', familyReenrollmentRoutes);
 
 app.use((req, res) => res.status(404).json({ error: "Rota nao encontrada" }));
 app.use(errorHandler);
