@@ -1,6 +1,6 @@
 # ADR-011 — Diário da turma, agenda do professor e assistente de busca com IA
 
-Status: **PROPOSTA**, a partir do pedido do responsável pelo projeto em 2026-10-06. Depende da decisão dele sobre a posição no roteiro e sobre o modelo de IA.
+Status: **PROPOSTA**, a partir do pedido do responsável pelo projeto em 2026-10-06. A parte 3, página e agenda do professor, foi decidida por ele no mesmo dia. Faltam as perguntas 1 e 2: a posição do diário no roteiro e o modelo de IA.
 
 ## Contexto
 
@@ -81,7 +81,17 @@ O computador do responsável já tem o Ollama instalado, o que facilita o teste 
 - A agenda segue a regra de só inserção: cancelar um compromisso ou marcar uma tarefa como feita grava um registro novo.
 - O horário da semana é um cadastro novo. Ele não existe hoje no banco.
 
-**Posição:** junto com o Diário da turma (entrega 13), porque usa as mesmas salas e o mesmo acesso de professor. Se a entrega ficar grande demais, a agenda vira uma entrega própria logo depois.
+**Decidido pelo responsável em 2026-10-06:**
+- A página e a agenda entram junto com o Diário da turma (entrega 13), porque usam as mesmas salas e o mesmo acesso de professor.
+- As anotações pessoais são só do próprio professor. Nem a secretaria nem a direção as veem.
+- Cada professor tem login e senha próprios. Ele vê e registra só nas turmas em que dá aula e no que é responsabilidade dele, e tudo o que registra leva o nome dele.
+
+**Como isso fica no banco:**
+- Os dados continuam num banco só da escola, com a regra por escola que já existe ([ADR-001](ADR-001-isolamento-multi-escola.md)). Por cima dela entra uma regra por professor.
+- A conta de usuário do professor passa a ser ligada ao cadastro dele em Professores e equipe.
+- Ele só lê e grava nas turmas em que tem atribuição vigente, que já existe hoje como "professores da turma", com data de início e de fim.
+- Quando a atribuição termina, o acesso àquela turma termina junto. O que ele registrou continua no histórico, com o nome dele.
+- A secretaria cria o acesso. A senha é pessoal: só o professor a conhece, e ela nunca é compartilhada.
 
 O protótipo clicável já mostra a página e a agenda nas visões "Profª Regina", com uma sala, e "Prof. Paulo", com duas salas.
 
@@ -89,11 +99,11 @@ O protótipo clicável já mostra a página e a agenda nas visões "Profª Regin
 
 1. O diário da turma substitui a entrega 13 (frequência), como "chamada, ocorrências e plano de aula", ou vira entregas separadas?
 2. O assistente de IA fica depois do MVP 2, como módulo próprio, depois do teste comparando modelo local e hospedado?
-3. A página e a agenda do professor entram junto com o Diário da turma (entrega 13) ou numa entrega própria logo depois? As anotações pessoais ficam visíveis só para o próprio professor?
+3. **Página e agenda do professor: decidida em 06/10.** Entram junto com o diário. As anotações são só do professor, e cada professor tem acesso próprio, limitado às turmas dele.
 
 ## Consequências, se aceito
 
 - **Roteiro:** a entrega 13 passa a se chamar "Diário da turma". O assistente entra como módulo depois do MVP 2, com o resultado do teste registrado num ADR próprio.
 - **Escopo:** frequência, ocorrências e plano de aula nascem como parte da ficha da turma da entrega 10, e não como telas soltas.
-- **Perfis (entrega 12):** o perfil de professor fica limitado às salas em que ele dá aula.
-- **Banco:** a agenda pede tabelas novas, para o horário da semana, os compromissos e as anotações pessoais, com RLS e só inserção como as demais.
+- **Perfis (entrega 12):** o professor tem login e senha próprios, e o acesso fica limitado às turmas em que ele tem atribuição vigente. A conta de usuário passa a ser ligada ao cadastro do professor.
+- **Banco:** a agenda pede tabelas novas, para o horário da semana, os compromissos e as anotações pessoais, com RLS e só inserção como as demais. O acesso por professor entra como uma regra a mais, por cima da regra por escola.
