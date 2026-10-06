@@ -74,7 +74,7 @@ O computador do responsável já tem o Ollama instalado, o que facilita o teste 
 | Horário da semana: as aulas de cada sala | A secretaria, em Configurações, ou por planilha | O próprio professor |
 | Compromissos da escola: reuniões, conselho de classe | A coordenação ou a secretaria | Todos os professores |
 | Agenda da sala: provas, passeios, trabalhos | Os professores da sala e a secretaria | Os professores da sala e a secretaria |
-| Tarefas e lembretes pessoais, com caixa de marcar quando feitos | O próprio professor | Só o próprio professor |
+| Tarefas e lembretes pessoais, com caixa de marcar quando feitos | O próprio professor | O próprio professor e a direção |
 
 **Regras:**
 - O que é sobre um aluno vai para o diário, como ocorrência, e não para a anotação pessoal. Assim a coordenação vê o que precisa ver.
@@ -83,7 +83,8 @@ O computador do responsável já tem o Ollama instalado, o que facilita o teste 
 
 **Decidido pelo responsável em 2026-10-06:**
 - A página e a agenda entram junto com o Diário da turma (entrega 13), porque usam as mesmas salas e o mesmo acesso de professor.
-- As anotações pessoais são só do próprio professor. Nem a secretaria nem a direção as veem.
+- As anotações pessoais são do próprio professor: só ele anota e marca. A secretaria não as vê.
+- **A direção vê tudo** o que acontece na escola e no sistema: todas as salas, todos os alunos, as agendas e o histórico de quem fez o quê, com nome, dia e hora. Isso inclui as anotações pessoais.
 - Cada professor tem login e senha próprios. Ele vê e registra só nas turmas em que dá aula e no que é responsabilidade dele, e tudo o que registra leva o nome dele.
 
 **Como isso fica no banco:**
@@ -99,7 +100,7 @@ O protótipo clicável já mostra a página e a agenda nas visões "Profª Regin
 
 1. O diário da turma substitui a entrega 13 (frequência), como "chamada, ocorrências e plano de aula", ou vira entregas separadas?
 2. O assistente de IA fica depois do MVP 2, como módulo próprio, depois do teste comparando modelo local e hospedado?
-3. **Página e agenda do professor: decidida em 06/10.** Entram junto com o diário. As anotações são só do professor, e cada professor tem acesso próprio, limitado às turmas dele.
+3. **Página e agenda do professor: decidida em 06/10.** Entram junto com o diário. Só o professor anota e marca as anotações pessoais, e cada professor tem acesso próprio, limitado às turmas dele. A direção vê tudo.
 
 ## Consequências, se aceito
 
